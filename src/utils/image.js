@@ -428,13 +428,14 @@ export class RawImage {
             // Draw image to context, padding in the process
             ctx.drawImage(canvas,
                 0, 0, this.width, this.height,
-                left, top, newWidth, newHeight
+                left, top, this.width, this.height
             );
 
             // Create image from the padded data
             const paddedImage = new RawImage(
                 ctx.getImageData(0, 0, newWidth, newHeight).data,
-                newWidth, newHeight, 4);
+                newWidth, newHeight, 4
+            );
 
             // Convert back so that image has the same number of channels as before
             return paddedImage.convert(numChannels);
