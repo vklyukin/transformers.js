@@ -659,6 +659,36 @@ export class RawImage {
     }
 
     /**
+     * Split this image into individual bands. This method returns an array of individual image bands from an image.
+     * For example, splitting an "RGB" image creates three new images each containing a copy of one of the original bands (red, green, blue).
+     * 
+     * Inspired by PIL's `Image.split()` [function](https://pillow.readthedocs.io/en/latest/reference/Image.html#PIL.Image.Image.split).
+     * @returns {RawImage[]} An array containing bands.
+     */
+    split() {
+        const { data, width, height, channels } = this;
+
+        /** @type {typeof Uint8Array | typeof Uint8ClampedArray} */
+        const data_type = /** @type {any} */(data.constructor);
+        const per_channel_length = data.length / channels;
+
+        // Pre-allocate buffers for each channel
+        const split_data = Array.from(
+            { length: channels },
+            () => new data_type(per_channel_length),
+        );
+
+        // Write pixel data
+        for (let i = 0; i < per_channel_length; ++i) {
+            const data_offset = channels * i;
+            for (let j = 0; j < channels; ++j) {
+                split_data[j][i] = data[data_offset + j];
+            }
+        }
+        return split_data.map((data) => new RawImage(data, width, height, 1));
+    }
+
+    /**
      * Helper method to update the image data.
      * @param {Uint8ClampedArray} data The new image data.
      * @param {number} width The new width of the image.

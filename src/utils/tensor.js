@@ -340,10 +340,43 @@ export class Tensor {
         return this;
     }
 
+    /**
+     * Creates a deep copy of the current Tensor.
+     * @returns {Tensor} A new Tensor with the same type, data, and dimensions as the original.
+     */
     clone() {
         return new Tensor(this.type, this.data.slice(), this.dims.slice());
     }
 
+    /**
+     * Performs a slice operation on the Tensor along specified dimensions.
+     *
+     * Consider a Tensor that has a dimension of [4, 7]:
+     * ```
+     * [ 1,  2,  3,  4,  5,  6,  7]
+     * [ 8,  9, 10, 11, 12, 13, 14]
+     * [15, 16, 17, 18, 19, 20, 21]
+     * [22, 23, 24, 25, 26, 27, 28]
+     * ```
+     * We can slice against the two dims of row and column, for instance in this
+     * case we can start at the second element, and return to the second last,
+     * like this:
+     * ```
+     * tensor.slice([1, -1], [1, -1]);
+     * ```
+     * which would return:
+     * ```
+     * [  9, 10, 11, 12, 13 ]
+     * [ 16, 17, 18, 19, 20 ]
+     * ```
+     *
+     * @param {...(number|number[]|null)} slices The slice specifications for each dimension.
+     * - If a number is given, then a single element is selected.
+     * - If an array of two numbers is given, then a range of elements [start, end (exclusive)] is selected.
+     * - If null is given, then the entire dimension is selected.
+     * @returns {Tensor} A new Tensor containing the selected elements.
+     * @throws {Error} If the slice input is invalid.
+     */
     slice(...slices) {
         // This allows for slicing with ranges and numbers
         const newTensorDims = [];
@@ -413,7 +446,6 @@ export class Tensor {
             data[i] = this_data[originalIndex];
         }
         return new Tensor(this.type, data, newTensorDims);
-
     }
 
     /**

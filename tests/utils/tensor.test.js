@@ -51,6 +51,33 @@ describe("Tensor operations", () => {
     // TODO add tests for errors
   });
 
+  describe("slice", () => {
+    it("should return a given row dim", async () => {
+      const t1 = new Tensor("float32", [1, 2, 3, 4, 5, 6], [3, 2]);
+      const t2 = t1.slice(1);
+      const target = new Tensor("float32", [3, 4], [2]);
+
+      compare(t2, target);
+    });
+
+    it("should return a range of rows", async () => {
+      const t1 = new Tensor("float32", [1, 2, 3, 4, 5, 6], [3, 2]);
+      const t2 = t1.slice([1, 3]);
+      const target = new Tensor("float32", [3, 4, 5, 6], [2, 2]);
+
+      compare(t2, target);
+    });
+
+    it("should return a crop", async () => {
+      const t1 = new Tensor("float32", Array.from({ length: 28 }, (_, i) => i + 1), [4, 7]);
+      const t2 = t1.slice([1, -1], [1, -1]);
+
+      const target = new Tensor("float32", [9, 10, 11, 12, 13, 16, 17, 18, 19, 20], [2, 5]);
+
+      compare(t2, target);
+    });
+  });
+
   describe("stack", () => {
     const t1 = new Tensor("float32", [0, 1, 2, 3, 4, 5], [1, 3, 2]);
 
