@@ -68,6 +68,7 @@ function getNormalizedConfig(config) {
         case 'llava':
         case 'paligemma':
         case 'florence2':
+        case 'llava_onevision':
             init_normalized_config = getNormalizedConfig(config.text_config);
             break;
         case 'moondream1':
@@ -75,6 +76,9 @@ function getNormalizedConfig(config) {
             break;
         case 'musicgen':
             init_normalized_config = getNormalizedConfig(config.decoder);
+            break;
+        case 'multi_modality':
+            init_normalized_config = getNormalizedConfig(config.language_config);
             break;
 
         // Decoder-only models
@@ -105,6 +109,7 @@ function getNormalizedConfig(config) {
         case 'mistral':
         case 'starcoder2':
         case 'qwen2':
+        case 'qwen2_vl':
             mapping['num_heads'] = 'num_key_value_heads';
             mapping['num_layers'] = 'num_hidden_layers';
             mapping['hidden_size'] = 'hidden_size';
@@ -225,13 +230,11 @@ function getNormalizedConfig(config) {
  */
 export function getKeyValueShapes(config, {
     prefix = 'past_key_values',
+    batch_size=1,
 } = {}) {
     /** @type {Record<string, number[]>} */
     const decoderFeeds = {};
     const normalized_config = config.normalized_config;
-
-    // TODO support batches (i.e., batch_size > 1)
-    const batch_size = 1;
 
     if (normalized_config.is_encoder_decoder && (
         'num_encoder_heads' in normalized_config && 'num_decoder_heads' in normalized_config

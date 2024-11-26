@@ -45,8 +45,10 @@ import {
 } from './models.js';
 import {
     AutoProcessor,
-    Processor
-} from './processors.js';
+} from './models/auto/processing_auto.js';
+import {
+    Processor,
+} from './base/processing_utils.js';
 
 import {
     Callable,
@@ -54,7 +56,6 @@ import {
 
 import {
     dispatchCallback,
-    pop,
     product,
 } from './utils/core.js';
 import {
@@ -158,7 +159,6 @@ function get_bounding_box(box, asInteger) {
 /**
  * The Pipeline class is the class from which all pipelines inherit.
  * Refer to this class for methods shared across different pipelines.
- * @extends Callable
  */
 export class Pipeline extends Callable {
     /**
@@ -2131,8 +2131,8 @@ export class ImageSegmentationPipeline extends (/** @type {new (options: ImagePi
             fn = this.subtasks_mapping[subtask];
         } else {
             for (let [task, func] of Object.entries(this.subtasks_mapping)) {
-                if (func in this.processor.feature_extractor) {
-                    fn = this.processor.feature_extractor[func].bind(this.processor.feature_extractor);
+                if (func in this.processor.image_processor) {
+                    fn = this.processor.image_processor[func].bind(this.processor.image_processor);
                     subtask = task;
                     break;
                 }
@@ -2362,7 +2362,7 @@ export class ObjectDetectionPipeline extends (/** @type {new (options: ImagePipe
         const output = await this.model({ pixel_values, pixel_mask });
 
         // @ts-ignore
-        const processed = this.processor.feature_extractor.post_process_object_detection(output, threshold, imageSizes);
+        const processed = this.processor.image_processor.post_process_object_detection(output, threshold, imageSizes);
 
         // Add labels
         const id2label = this.model.config.id2label;
@@ -2510,7 +2510,7 @@ export class ZeroShotObjectDetectionPipeline extends (/** @type {new (options: T
             const output = await this.model({ ...text_inputs, pixel_values });
 
             // @ts-ignore
-            const processed = this.processor.feature_extractor.post_process_object_detection(output, threshold, imageSize, true)[0];
+            const processed = this.processor.image_processor.post_process_object_detection(output, threshold, imageSize, true)[0];
             let result = processed.boxes.map((box, i) => ({
                 score: processed.scores[i],
                 label: candidate_labels[processed.classes[i]],
