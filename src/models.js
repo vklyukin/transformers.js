@@ -554,14 +554,12 @@ function default_merge_input_ids_with_image_features({
     input_ids,
     attention_mask,
 }) {
-    console.log('input_ids', input_ids)
     const image_tokens = input_ids.tolist().map(ids =>
         ids.reduce((acc, x, idx) => {
             if (x == image_token_id) acc.push(idx);
             return acc;
         }, [])
     );
-    console.log('image_tokens', image_tokens)
     const n_image_tokens = image_tokens.reduce((acc, x) => acc + x.length, 0);
     const n_image_features = image_features.dims[0];
     if (n_image_tokens !== n_image_features) {
@@ -617,15 +615,11 @@ async function imageTextToTextForward(self, {
 
     if (!inputs_embeds) {
         // 1. Extract the input embeddings
-        console.log('before encode_text');
         inputs_embeds = await self.encode_text({ input_ids, ...kwargs });
-        console.log('after encode_text', inputs_embeds.dims);
 
         // 2. Possibly, merge text and images
         if (pixel_values && input_ids.dims[1] !== 1) {
-            console.log('before encode_image');
             const image_features = await self.encode_image({ pixel_values, ...kwargs });
-            console.log('after encode_image');
 
             ({ inputs_embeds, attention_mask } = self._merge_input_ids_with_image_features({
                 image_features,
