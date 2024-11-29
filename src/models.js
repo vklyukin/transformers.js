@@ -4037,6 +4037,23 @@ export class Gemma2Model extends Gemma2PreTrainedModel { }
 export class Gemma2ForCausalLM extends Gemma2PreTrainedModel { }
 //////////////////////////////////////////////////
 
+
+//////////////////////////////////////////////////
+// Glm models
+
+/**
+ * The bare Glm Model outputting raw hidden-states without any specific head on top.
+ */
+export class GlmPreTrainedModel extends PreTrainedModel { }
+/**
+ * The bare Glm Model outputting raw hidden-states without any specific head on top.
+ */
+export class GlmModel extends GlmPreTrainedModel { }
+
+export class GlmForCausalLM extends GlmPreTrainedModel { }
+//////////////////////////////////////////////////
+
+
 //////////////////////////////////////////////////
 export class OpenELMPreTrainedModel extends PreTrainedModel { }
 export class OpenELMModel extends OpenELMPreTrainedModel { }
@@ -6765,6 +6782,7 @@ const MODEL_MAPPING_NAMES_DECODER_ONLY = new Map([
     ['cohere', ['CohereModel', CohereModel]],
     ['gemma', ['GemmaModel', GemmaModel]],
     ['gemma2', ['Gemma2Model', Gemma2Model]],
+    ['glm', ['GlmModel', GlmModel]],
     ['openelm', ['OpenELMModel', OpenELMModel]],
     ['qwen2', ['Qwen2Model', Qwen2Model]],
     ['phi', ['PhiModel', PhiModel]],
@@ -6856,6 +6874,7 @@ const MODEL_FOR_CAUSAL_LM_MAPPING_NAMES = new Map([
     ['cohere', ['CohereForCausalLM', CohereForCausalLM]],
     ['gemma', ['GemmaForCausalLM', GemmaForCausalLM]],
     ['gemma2', ['Gemma2ForCausalLM', Gemma2ForCausalLM]],
+    ['glm', ['GlmForCausalLM', GlmForCausalLM]],
     ['openelm', ['OpenELMForCausalLM', OpenELMForCausalLM]],
     ['qwen2', ['Qwen2ForCausalLM', Qwen2ForCausalLM]],
     ['phi', ['PhiForCausalLM', PhiForCausalLM]],
