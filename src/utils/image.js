@@ -794,3 +794,8 @@ export class RawImage {
         });
     }
 }
+
+/**
+ * Helper function to load an image from a URL, path, etc.
+ */
+export const load_image = RawImage.read.bind(RawImage);
