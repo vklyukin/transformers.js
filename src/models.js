@@ -387,9 +387,17 @@ async function sessionRun(session, inputs) {
         output = replaceTensors(output);
         return output;
     } catch (e) {
+        // Error messages can be long (nested) and uninformative. For this reason,
+        // we apply minor formatting to show the most important information
+        const formatted = Object.fromEntries(Object.entries(checkedInputs)
+            .map(([k, { type, dims, data }]) => [k, {
+                // Extract these properties from the underlying ORT tensor
+                type, dims, data,
+            }]));
+
         // This usually occurs when the inputs are of the wrong type.
         console.error(`An error occurred during model execution: "${e}".`);
-        console.error('Inputs given to model:', checkedInputs)
+        console.error('Inputs given to model:', formatted);
         throw e;
     }
 }
@@ -3544,7 +3552,7 @@ export class Idefics3ForConditionalGeneration extends Idefics3PreTrainedModel {
         const features = (await sessionRun(this.sessions['vision_encoder'], { pixel_values, pixel_attention_mask })).image_features;
         return features;
     }
- 
+
     _merge_input_ids_with_image_features(kwargs) {
         const vision_hidden_size = kwargs.image_features.dims.at(-1);
         const reshaped_image_hidden_states = kwargs.image_features.view(-1, vision_hidden_size);
@@ -4355,7 +4363,7 @@ export class Qwen2VLForConditionalGeneration extends Qwen2VLPreTrainedModel {
 
     _merge_input_ids_with_image_features(kwargs) {
         return default_merge_input_ids_with_image_features({
-        // @ts-ignore
+            // @ts-ignore
             image_token_id: this.config.image_token_id,
             ...kwargs
         })
