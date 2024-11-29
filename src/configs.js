@@ -69,6 +69,7 @@ function getNormalizedConfig(config) {
         case 'paligemma':
         case 'florence2':
         case 'llava_onevision':
+        case 'idefics3':
             init_normalized_config = getNormalizedConfig(config.text_config);
             break;
         case 'moondream1':

@@ -47,27 +47,30 @@ const MODELS = {
   // efficientnet: 'Xenova/efficientnet-b0',
   florence2: "Xenova/tiny-random-Florence2ForConditionalGeneration",
   qwen2_vl: "hf-internal-testing/tiny-random-Qwen2VLForConditionalGeneration",
+  idefics3: "hf-internal-testing/tiny-random-Idefics3ForConditionalGeneration",
 };
 
+const BASE_URL = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/";
 const TEST_IMAGES = {
-  white_image: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/white-image.png",
-  pattern_3x3: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/pattern_3x3.png",
-  pattern_3x5: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/pattern_3x5.png",
-  checkerboard_8x8: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/checkerboard_8x8.png",
-  checkerboard_64x32: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/checkerboard_64x32.png",
-  receipt: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/receipt.png",
-  tiger: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/tiger.jpg",
-  paper: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/nougat_paper.png",
-  cats: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/cats.jpg",
+  white_image: BASE_URL + "white-image.png",
+  pattern_3x3: BASE_URL + "pattern_3x3.png",
+  pattern_3x5: BASE_URL + "pattern_3x5.png",
+  checkerboard_8x8: BASE_URL + "checkerboard_8x8.png",
+  checkerboard_64x32: BASE_URL + "checkerboard_64x32.png",
+  gradient_1280x640: BASE_URL + "gradient_1280x640.png",
+  receipt: BASE_URL + "receipt.png",
+  tiger: BASE_URL + "tiger.jpg",
+  paper: BASE_URL + "nougat_paper.png",
+  cats: BASE_URL + "cats.jpg",
 
   // grayscale image
   skateboard: "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/blog/ml-web-games/skateboard.png",
 
-  vitmatte_image: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/vitmatte_image.png",
-  vitmatte_trimap: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/vitmatte_trimap.png",
+  vitmatte_image: BASE_URL + "vitmatte_image.png",
+  vitmatte_trimap: BASE_URL + "vitmatte_trimap.png",
 
-  beetle: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/beetle.png",
-  book_cover: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/book-cover.png",
+  beetle: BASE_URL + "beetle.png",
+  book_cover: BASE_URL + "book-cover.png",
 };
 
 describe("Processors", () => {
@@ -637,7 +640,7 @@ describe("Processors", () => {
     //     }
     // }, MAX_TEST_EXECUTION_TIME);
 
-    // Qwen2VLProcessor
+    // Qwen2VLImageProcessor
     // - custom image processing (min_pixels, max_pixels)
     it(
       MODELS.qwen2_vl,
@@ -655,6 +658,76 @@ describe("Processors", () => {
           compare(original_sizes, [[224, 224]]);
           compare(reshaped_input_sizes, [[224, 224]]);
         }
+      },
+      MAX_TEST_EXECUTION_TIME,
+    );
+
+    // Idefics3ImageProcessor
+    // - custom image processing (patching)
+    it(
+      MODELS.idefics3,
+      async () => {
+        const processor = await AutoImageProcessor.from_pretrained(MODELS.idefics3);
+
+        const image = await load_image(TEST_IMAGES.gradient_1280x640);
+
+        const image_1 = await image.resize(1600, 1067);
+        const image_2 = await image.resize(224, 224);
+
+        {
+          // test no image splitting
+          const { pixel_values, rows, cols } = await processor(image, { do_image_splitting: false, return_row_col_info: true });
+          compare(pixel_values.dims, [1, 1, 3, 364, 364]);
+          compare(
+            pixel_values.mean().item(),
+            -0.001035306602716446,
+            0.1, // threshold
+          );
+          compare(rows, [[0]]);
+          compare(cols, [[0]]);
+        }
+
+        {
+          // test correct patching
+          const { pixel_values, rows, cols } = await processor(image, { return_row_col_info: true });
+          compare(pixel_values.dims, [1, 9, 3, 364, 364]);
+          compare(
+            pixel_values.flatten(2).mean(2).tolist(),
+            [[-0.7012196183204651, -0.30104631185531616, 0.09912905097007751, 0.49929487705230713, -0.5011996626853943, -0.10103467106819153, 0.2991456389427185, 0.6993265151977539, -0.0010353063698858023]],
+            0.1, // threshold
+          );
+          compare(rows, [[2]]);
+          compare(cols, [[4]]);
+        }
+
+        {
+          // unbatched, single image
+          const { pixel_values, rows, cols } = await processor(image_1, { return_row_col_info: true });
+          compare(pixel_values.dims, [1, 13, 3, 364, 364]);
+
+          compare(rows, [[3]]);
+          compare(cols, [[4]]);
+        }
+
+        {
+          // unbatched, multiple images
+          const { pixel_values, rows, cols } = await processor([image_1, image_2], { return_row_col_info: true });
+          compare(pixel_values.dims, [1, 30, 3, 364, 364]);
+
+          compare(rows, [[3, 4]]);
+          compare(cols, [[4, 4]]);
+        }
+
+        // TODO:
+        // { // batched, multiple images
+        //   const { pixel_values, rows, cols }  = await processor([
+        //       [image_1],
+        //       [image_1, image_2],
+        //   ], { return_row_col_info: true });
+        //   compare(pixel_values.dims, [2, 30, 3, 364, 364]);
+        //   compare(rows, [[3], [3, 4]]);
+        //   compare(cols, [[4], [4, 4]]);
+        // }
       },
       MAX_TEST_EXECUTION_TIME,
     );
