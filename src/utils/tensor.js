@@ -32,6 +32,8 @@ const DataTypeMap = Object.freeze({
     int64: BigInt64Array,
     uint64: BigUint64Array,
     bool: Uint8Array,
+    uint4: Uint8Array,
+    int4: Int8Array,
 });
 
 /**
