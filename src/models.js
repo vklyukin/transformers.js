@@ -182,6 +182,17 @@ async function getSession(pretrained_model_name_or_path, fileName, options) {
         }
     }
 
+    if (dtype === 'auto') {
+        const config_dtype = custom_config.dtype?.[fileName];
+        if (config_dtype === 'auto') {
+            // Choose default dtype based on device, falling back to fp32
+            dtype = DEFAULT_DEVICE_DTYPE_MAPPING[selectedDevice] ?? DATA_TYPES.fp32;
+        } else {
+            // Defined by the custom config, and is not "auto"
+            dtype = config_dtype;
+        }
+    }
+
     const selectedDtype = /** @type {import("./utils/dtypes.js").DataType} */(dtype);
 
     if (!DEFAULT_DTYPE_SUFFIX_MAPPING.hasOwnProperty(selectedDtype)) {
