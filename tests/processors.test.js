@@ -672,7 +672,7 @@ describe("Processors", () => {
         const image = await load_image(TEST_IMAGES.gradient_1280x640);
         const image_1 = await image.resize(1600, 1067);
         const image_2 = await image.resize(224, 224);
-        
+
         const white_image = await load_image(TEST_IMAGES.white_image);
         const white_image_1 = await white_image.resize(1600, 1067);
         const white_image_2 = await white_image.resize(224, 224);
@@ -692,28 +692,27 @@ describe("Processors", () => {
 
         {
           // test batched no image splitting
-          const { pixel_values, pixel_attention_mask, rows, cols } = await processor([
-            [white_image_1],
-            [white_image_2],
-            [white_image_1, white_image_2],
-          ], { do_image_splitting: false, return_row_col_info: true });
+          const { pixel_values, pixel_attention_mask, rows, cols } = await processor([[white_image_1], [white_image_2], [white_image_1, white_image_2]], { do_image_splitting: false, return_row_col_info: true });
           compare(pixel_values.dims, [3, 2, 3, 364, 364]);
           compare(
             pixel_values.mean().item(),
-            2/3,
+            2 / 3,
             0.01, // threshold
           );
           compare(pixel_attention_mask.dims, [3, 2, 364, 364]);
           compare(
             pixel_attention_mask.mean().item(),
-            2/3,
+            2 / 3,
             0.001, // threshold
           );
           compare(rows, [[0], [0], [0, 0]]);
           compare(cols, [[0], [0], [0, 0]]);
 
           // Test that the order of the pixel attention mask matches the python implementation
-          compare(pixel_attention_mask.data.reduce((a, b, i) => a + i * b, 0), 228217205216);
+          compare(
+            pixel_attention_mask.data.reduce((a, b, i) => a + i * b, 0),
+            228217205216,
+          );
         }
 
         {
@@ -749,10 +748,7 @@ describe("Processors", () => {
 
         {
           // batched, multiple images
-          const { pixel_values, rows, cols }  = await processor([
-              [image_1],
-              [image_1, image_2],
-          ], { return_row_col_info: true });
+          const { pixel_values, rows, cols } = await processor([[image_1], [image_1, image_2]], { return_row_col_info: true });
           compare(pixel_values.dims, [2, 30, 3, 364, 364]);
           compare(rows, [[3], [3, 4]]);
           compare(cols, [[4], [4, 4]]);
