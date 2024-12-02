@@ -711,6 +711,9 @@ describe("Processors", () => {
           );
           compare(rows, [[0], [0], [0, 0]]);
           compare(cols, [[0], [0], [0, 0]]);
+
+          // Test that the order of the pixel attention mask matches the python implementation
+          compare(pixel_attention_mask.data.reduce((a, b, i) => a + i * b, 0), 228217205216);
         }
 
         {
