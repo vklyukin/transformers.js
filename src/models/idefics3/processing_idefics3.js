@@ -67,7 +67,7 @@ export class Idefics3Processor extends Processor {
     /**
      * 
      * @param {string|string[]} text 
-     * @param {RawImage|RawImage[]} images  
+     * @param {RawImage|RawImage[]|RawImage[][]} images  
      * @returns {Promise<any>}
      */
     async _call(text, images = null, options = {}) {

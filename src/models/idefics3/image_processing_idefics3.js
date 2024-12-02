@@ -3,7 +3,7 @@
 import {
     ImageProcessor,
 } from "../../base/image_processors_utils.js";
-import { cat, full, interpolate_4d } from "../../utils/tensor.js";
+import { cat, full, interpolate_4d, stack } from "../../utils/tensor.js";
 
 export class Idefics3ImageProcessor extends ImageProcessor {
     constructor(config) {
@@ -14,8 +14,13 @@ export class Idefics3ImageProcessor extends ImageProcessor {
     }
 
     /**
+     * @typedef {import('../../utils/image.js').RawImage} RawImage
+     * @typedef {import('../../utils/tensor.js').Tensor} Tensor
+     */
+
+    /**
      * Calculate size to resize images to, to be multiples of `vision_encoder_max_size` while preserving the aspect ratio.
-     * @param {import('../../utils/tensor.js').Tensor} pixel_values Tensor of the image to resize.
+     * @param {Tensor} pixel_values Tensor of the image to resize.
      * @param {number} vision_encoder_max_size Maximum size of the output image. If the image is larger than this size,
      * it will be split into patches of this size, and the original image will be concatenated with the patches, resized to max_size.
      */
@@ -35,72 +40,116 @@ export class Idefics3ImageProcessor extends ImageProcessor {
         return { height, width };
     }
 
-    // /** @param {RawImage|RawImage[]|RawImage[][]} images */
+    /** @param {RawImage|RawImage[]|RawImage[][]} images */
     async _call(images, {
         do_image_splitting = null,
         return_row_col_info = false,
     } = {}) {
-        // TODO: support 2D RawImages
+
+        /** @type {RawImage[][]} */
+        let batched_2d_images;
         if (!Array.isArray(images)) {
-            images = [images];
+            batched_2d_images = [[images]];
+        } else {
+            if (images.length === 0 || !images[0]) {
+                throw new Error("No images provided.");
+            }
+            if (!Array.isArray(images[0])) {
+                batched_2d_images = [/** @type {RawImage[]} */(images)];
+            } else {
+                batched_2d_images = /** @type {RawImage[][]} */(images);
+            }
         }
 
-        let images_list = await Promise.all(images.map(x => this.preprocess(x)));
-
-        // Original sizes of images
-        const original_sizes = images_list.map(x => x.original_size);
-
-        // Reshaped sizes of images, before padding or cropping
-        const reshaped_input_sizes = images_list.map(x => x.reshaped_input_size);
-
-        // Convert images to 4D tensors for easier processing
-        images_list.forEach(x => x.pixel_values.unsqueeze_(0));
-
-        let pixel_values;
+        // List of tensors, each with shape [patches, channels, height, width]
+        let all_pixel_values = [];
         let images_list_rows = [];
         let images_list_cols = [];
 
-        const { longest_edge } = this.max_image_size;
+        const original_sizes = [];
+        const reshaped_input_sizes = [];
+        for (const image_batch of batched_2d_images) {
 
-        if (do_image_splitting ?? this.do_image_splitting) {
-            let image_rows = new Array(images_list.length);
-            let image_cols = new Array(images_list.length);
+            let images_list = await Promise.all(image_batch.map(x => this.preprocess(x)));
 
-            // We first resize both height and width of each image to the nearest max_image_size multiple, disregarding the aspect ratio
-            images_list = await Promise.all(images_list.map(async (x, i) => {
-                const new_size = this.get_resize_for_vision_encoder(x.pixel_values, longest_edge);
+            // Original sizes of images
+            original_sizes.push(...images_list.map(x => x.original_size));
 
-                const resized = await interpolate_4d(x.pixel_values, {
-                    size: [new_size.height, new_size.width],
-                });
+            // Reshaped sizes of images, before padding or cropping
+            reshaped_input_sizes.push(...images_list.map(x => x.reshaped_input_size));
 
-                const { frames, num_splits_h, num_splits_w } = await this.split_image(resized, this.max_image_size);
-                image_rows[i] = num_splits_h;
-                image_cols[i] = num_splits_w;
-                return cat(frames, 0);
-            }));
+            // Convert images to 4D tensors for easier processing
+            images_list.forEach(x => x.pixel_values.unsqueeze_(0));
 
-            images_list_rows.push(image_rows);
-            images_list_cols.push(image_cols);
-        } else {
-            /** @type {[number, number]} */
-            const size = [longest_edge, longest_edge];
-            images_list = await Promise.all(
-                images_list.map(x => interpolate_4d(x.pixel_values, { size }))
-            );
+            const { longest_edge } = this.max_image_size;
 
-            images_list_rows.push(new Array(images_list.length).fill(0));
-            images_list_cols.push(new Array(images_list.length).fill(0));
+            /** @type {Tensor[]} */
+            let images_tensor;
+            if (do_image_splitting ?? this.do_image_splitting) {
+                let image_rows = new Array(images_list.length);
+                let image_cols = new Array(images_list.length);
+
+                // We first resize both height and width of each image to the nearest max_image_size multiple, disregarding the aspect ratio
+                images_tensor = await Promise.all(images_list.map(async (x, i) => {
+                    const new_size = this.get_resize_for_vision_encoder(x.pixel_values, longest_edge);
+
+                    const resized = await interpolate_4d(x.pixel_values, {
+                        size: [new_size.height, new_size.width],
+                    });
+
+                    const { frames, num_splits_h, num_splits_w } = await this.split_image(resized, this.max_image_size);
+                    image_rows[i] = num_splits_h;
+                    image_cols[i] = num_splits_w;
+                    return cat(frames, 0);
+                }));
+
+                images_list_rows.push(image_rows);
+                images_list_cols.push(image_cols);
+
+            } else {
+                /** @type {[number, number]} */
+                const size = [longest_edge, longest_edge];
+                images_tensor = await Promise.all(
+                    images_list.map(x => interpolate_4d(x.pixel_values, { size }))
+                );
+
+                images_list_rows.push(new Array(images_list.length).fill(0));
+                images_list_cols.push(new Array(images_list.length).fill(0));
+            }
+
+            all_pixel_values.push(cat(images_tensor, 0));
         }
 
         // Stack pixel values
-        // TODO: support 2D images inputs
-        pixel_values = cat(images_list, 0);
-        pixel_values.unsqueeze_(0);
+        let pixel_values;
+        let pixel_attention_mask;
+        if (all_pixel_values.length === 1) {
+            pixel_values = all_pixel_values[0];
+            pixel_values.unsqueeze_(0);
+        } else {
+            // Add padding (if necessary) to images with less patches than the maximum number of patches
+            const max_num_patches = Math.max(...all_pixel_values.map(x => x.dims.at(0)));
 
-        // TODO: Improve pixel_attention_mask
-        const [b, n, c, h, w] = pixel_values.dims;
-        const pixel_attention_mask = full([b, n, h, w], true);
+            const [c, h, w] = all_pixel_values[0].dims.slice(1);
+
+            pixel_attention_mask = full([all_pixel_values.length, max_num_patches, h, w], 1);
+            const pixel_attention_mask_data = pixel_attention_mask.data;
+            const pixel_attention_mask_stride = max_num_patches * h * w;
+            for (let i = 0; i < all_pixel_values.length; ++i) {
+                const num_patches = all_pixel_values[i].dims[0];
+                if (num_patches < max_num_patches) {
+                    all_pixel_values[i] = cat([
+                        all_pixel_values[i],
+                        full([max_num_patches - num_patches, c, h, w], 0),
+                    ], 0);
+
+                    const start_offset = i * pixel_attention_mask_stride + num_patches * h * w;
+                    const end_offset = (i + 1) * pixel_attention_mask_stride;
+                    pixel_attention_mask_data.fill(0, start_offset, end_offset);
+                }
+            }
+            pixel_values = stack(all_pixel_values, 0);
+        }
 
         return {
             pixel_values,
