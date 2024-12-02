@@ -10,7 +10,6 @@ import {
   BertTokenizer,
   T5Tokenizer,
   WhisperTokenizer,
-  BartTokenizer,
   MarianTokenizer,
   PreTrainedTokenizer,
   AutoTokenizer,
@@ -20,6 +19,7 @@ import {
   AutoProcessor,
   Processor,
   Florence2Processor,
+  Idefics3Processor,
 
   // Models
   LlamaForCausalLM,
@@ -49,6 +49,7 @@ import {
   BertForQuestionAnswering,
   MusicgenForConditionalGeneration,
   LlavaForConditionalGeneration,
+  Idefics3ForConditionalGeneration,
   WhisperForConditionalGeneration,
   VisionEncoderDecoderModel,
   Florence2ForConditionalGeneration,
@@ -746,6 +747,148 @@ describe("Tiny random models", () => {
             [1n, 32000n, 29871n, 13n, 11889n, 29901n, 1724n, 29915n, 29879n, 278n, 2793n, 310n, 278n, 1967n, 29973n, 13n, 22933n, 9047n, 13566n, 29901n, 21557n, 16781n, 27238n, 8279n, 20454n, 11927n, 12462n, 12306n, 2414n, 7561n],
             [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n, 1n, 32000n, 6324n, 1217n, 22958n, 22913n, 10381n, 148n, 31410n, 31736n, 7358n, 9150n, 28635n],
           ]);
+        },
+        MAX_TEST_EXECUTION_TIME,
+      );
+
+      afterAll(async () => {
+        await model?.dispose();
+      }, MAX_MODEL_DISPOSE_TIME);
+    });
+  });
+
+  describe("idefics3", () => {
+    const conversation = [
+      {
+        role: "user",
+        content: [{ type: "image" }, { type: "text", text: "Can you describe this image?" }],
+      },
+    ];
+
+    // Empty white and black images
+    const white_image_dims = [224, 224, 3];
+    const white_image = new RawImage(new Uint8ClampedArray(white_image_dims[0] * white_image_dims[1] * white_image_dims[2]).fill(255), ...white_image_dims);
+    const black_image_dims = [720, 360, 3];
+    const black_image = new RawImage(new Uint8ClampedArray(black_image_dims[0] * black_image_dims[1] * black_image_dims[2]).fill(0), ...black_image_dims);
+
+    describe("Idefics3ForConditionalGeneration", () => {
+      const model_id = "hf-internal-testing/tiny-random-Idefics3ForConditionalGeneration";
+
+      /** @type {Idefics3ForConditionalGeneration} */
+      let model;
+      /** @type {Idefics3Processor} */
+      let processor;
+      /** @type {string} */
+      let text;
+      beforeAll(async () => {
+        model = await Idefics3ForConditionalGeneration.from_pretrained(model_id, {
+          // TODO move to config
+          ...DEFAULT_MODEL_OPTIONS,
+        });
+        processor = await AutoProcessor.from_pretrained(model_id);
+
+        text = processor.apply_chat_template(conversation, {
+          add_generation_prompt: true,
+        });
+      }, MAX_MODEL_LOAD_TIME);
+
+      it(
+        "forward w/ image splitting (default)",
+        async () => {
+          const inputs = await processor(text, white_image, {
+            do_image_splitting: true,
+          });
+
+          const { logits } = await model(inputs);
+          expect(logits.dims).toEqual([1, 3041, 128259]);
+          expect(logits.mean().item()).toBeCloseTo(-0.0002692154666874558, 6);
+        },
+        MAX_TEST_EXECUTION_TIME,
+      );
+
+      it(
+        "forward w/o image splitting",
+        async () => {
+          const inputs = await processor(text, white_image, {
+            do_image_splitting: false,
+          });
+
+          const { logits } = await model(inputs);
+          expect(logits.dims).toEqual([1, 189, 128259]);
+          expect(logits.mean().item()).toBeCloseTo(-0.00019743280427064747, 6);
+        },
+        MAX_TEST_EXECUTION_TIME,
+      );
+
+      it(
+        "batch_size=1 w/ image splitting",
+        async () => {
+          const inputs = await processor(text, white_image, {
+            do_image_splitting: true,
+          });
+          const generate_ids = await model.generate({
+            ...inputs,
+            max_new_tokens: 10,
+
+            // To obtain unique output tokens, deterministically
+            repetition_penalty: 2.0,
+          });
+          expect(generate_ids.dims).toEqual([1, 3051]);
+
+          const new_tokens = generate_ids.slice(null, [inputs.input_ids.dims.at(-1), null]);
+          expect(new_tokens.tolist()).toEqual([[64531n, 121777n, 70370n, 105334n, 12720n, 113356n, 47739n, 59240n, 102001n, 60344n]]);
+        },
+        MAX_TEST_EXECUTION_TIME,
+      );
+
+      it(
+        "batch_size=1 w/o image splitting",
+        async () => {
+          const inputs = await processor(text, white_image, {
+            do_image_splitting: false,
+          });
+          const generate_ids = await model.generate({
+            ...inputs,
+            max_new_tokens: 10,
+
+            // To obtain unique output tokens, deterministically
+            repetition_penalty: 2.0,
+          });
+          expect(generate_ids.dims).toEqual([1, 199]);
+
+          const new_tokens = generate_ids.slice(null, [inputs.input_ids.dims.at(-1), null]);
+          expect(new_tokens.tolist()).toEqual([[64531n, 121777n, 70370n, 105334n, 12720n, 113356n, 47739n, 59240n, 59697n, 65246n]]);
+        },
+        MAX_TEST_EXECUTION_TIME,
+      );
+
+      it(
+        "batch_size=1 multi-image w/o image splitting",
+        async () => {
+          const multi_image_conversation = [
+            {
+              role: "user",
+              content: [{ type: "image" }, { type: "image" }, { type: "text", text: "Can you describe these images?" }],
+            },
+          ];
+
+          const multi_image_text = processor.apply_chat_template(multi_image_conversation, {
+            add_generation_prompt: true,
+          });
+          const inputs = await processor(multi_image_text, [white_image, black_image], {
+            do_image_splitting: false,
+          });
+          const generate_ids = await model.generate({
+            ...inputs,
+            max_new_tokens: 10,
+
+            // To obtain unique output tokens, deterministically
+            repetition_penalty: 2.0,
+          });
+          expect(generate_ids.dims).toEqual([1, 374]);
+
+          const new_tokens = generate_ids.slice(null, [inputs.input_ids.dims.at(-1), null]);
+          expect(new_tokens.tolist()).toEqual([[73189n, 99346n, 113252n, 51743n, 33499n, 66430n, 78739n, 89539n, 121023n, 14474n]]);
         },
         MAX_TEST_EXECUTION_TIME,
       );
