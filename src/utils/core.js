@@ -187,3 +187,17 @@ export function len(s) {
     for (const c of s) ++length;
     return length;
 }
+
+/**
+ * Count the occurrences of a value in an array or string.
+ * This mimics the behavior of Python's `count` method.
+ * @param {any[]|string} arr The array or string to search.
+ * @param {any} value The value to count.
+ */
+export function count(arr, value) {
+    let count = 0;
+    for (const v of arr) {
+        if (v === value) ++count;
+    }
+    return count;
+}

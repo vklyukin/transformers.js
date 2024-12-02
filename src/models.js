@@ -182,6 +182,22 @@ async function getSession(pretrained_model_name_or_path, fileName, options) {
         }
     }
 
+    if (dtype === DATA_TYPES.auto) {
+        // Try to choose the auto dtype based on the custom config
+        let config_dtype = custom_config.dtype;
+        if (typeof config_dtype !== 'string') {
+            config_dtype = config_dtype[fileName];
+        }
+
+        if (config_dtype && config_dtype !== DATA_TYPES.auto && DATA_TYPES.hasOwnProperty(config_dtype)) {
+            // Defined by the custom config, and is not "auto"
+            dtype = config_dtype;
+        } else {
+            // Choose default dtype based on device, falling back to fp32
+            dtype = DEFAULT_DEVICE_DTYPE_MAPPING[selectedDevice] ?? DATA_TYPES.fp32;
+        }
+    }
+
     const selectedDtype = /** @type {import("./utils/dtypes.js").DataType} */(dtype);
 
     if (!DEFAULT_DTYPE_SUFFIX_MAPPING.hasOwnProperty(selectedDtype)) {
@@ -387,9 +403,17 @@ async function sessionRun(session, inputs) {
         output = replaceTensors(output);
         return output;
     } catch (e) {
+        // Error messages can be long (nested) and uninformative. For this reason,
+        // we apply minor formatting to show the most important information
+        const formatted = Object.fromEntries(Object.entries(checkedInputs)
+            .map(([k, { type, dims, data }]) => [k, {
+                // Extract these properties from the underlying ORT tensor
+                type, dims, data,
+            }]));
+
         // This usually occurs when the inputs are of the wrong type.
         console.error(`An error occurred during model execution: "${e}".`);
-        console.error('Inputs given to model:', checkedInputs)
+        console.error('Inputs given to model:', formatted);
         throw e;
     }
 }
@@ -543,6 +567,39 @@ async function decoderForward(self, model_inputs, is_encoder_decoder = false) {
     // Select only the inputs that are needed for the current session
     const fixed = pick(new_model_inputs, session.inputNames);
     return await sessionRun(session, fixed);
+}
+
+
+
+function default_merge_input_ids_with_image_features({
+    image_token_id,
+    inputs_embeds,
+    image_features,
+    input_ids,
+    attention_mask,
+}) {
+    const image_tokens = input_ids.tolist().map(ids =>
+        ids.reduce((acc, x, idx) => {
+            if (x == image_token_id) acc.push(idx);
+            return acc;
+        }, [])
+    );
+    const n_image_tokens = image_tokens.reduce((acc, x) => acc + x.length, 0);
+    const n_image_features = image_features.dims[0];
+    if (n_image_tokens !== n_image_features) {
+        throw new Error(`Image features and image tokens do not match: tokens: ${n_image_tokens}, features ${n_image_features}`);
+    }
+
+    // Equivalent to performing a masked_scatter
+    let img = 0;
+    for (let i = 0; i < image_tokens.length; ++i) {
+        const tokens = image_tokens[i];
+        const embeds = inputs_embeds[i];
+        for (let j = 0; j < tokens.length; ++j) {
+            embeds[tokens[j]].data.set(image_features[img++].data)
+        }
+    }
+    return { inputs_embeds, attention_mask }
 }
 
 
@@ -3304,8 +3361,8 @@ export class VisionEncoderDecoderModel extends PreTrainedModel {
 export class LlavaPreTrainedModel extends PreTrainedModel {
     forward_params = [
         'input_ids',
-        'pixel_values',
         'attention_mask',
+        'pixel_values',
         'position_ids',
         'past_key_values',
     ];
@@ -3487,6 +3544,46 @@ export class Florence2ForConditionalGeneration extends Florence2PreTrainedModel 
         return decoder_outputs;
     }
 }
+
+
+//////////////////////////////////////////////////
+// Idefics3 Models
+export class Idefics3PreTrainedModel extends PreTrainedModel {
+    forward_params = [
+        'input_ids',
+        'attention_mask',
+        'pixel_values',
+        'pixel_attention_mask',
+        'position_ids',
+        'past_key_values',
+    ];
+}
+
+/**
+ * The LLAVA model which consists of a vision backbone and a language model.
+ */
+export class Idefics3ForConditionalGeneration extends Idefics3PreTrainedModel {
+
+    async encode_image({ pixel_values, pixel_attention_mask }) {
+        const features = (await sessionRun(this.sessions['vision_encoder'], { pixel_values, pixel_attention_mask })).image_features;
+        return features;
+    }
+
+    _merge_input_ids_with_image_features(kwargs) {
+        const vision_hidden_size = kwargs.image_features.dims.at(-1);
+        const reshaped_image_hidden_states = kwargs.image_features.view(-1, vision_hidden_size);
+
+        return default_merge_input_ids_with_image_features({
+            // @ts-ignore
+            image_token_id: this.config.image_token_id,
+            ...kwargs,
+            image_features: reshaped_image_hidden_states,
+        })
+    }
+}
+//////////////////////////////////////////////////
+
+//////////////////////////////////////////////////
 export class CLIPPreTrainedModel extends PreTrainedModel { }
 
 /**
@@ -4280,36 +4377,12 @@ export class Qwen2VLForConditionalGeneration extends Qwen2VLPreTrainedModel {
         return features;
     }
 
-    _merge_input_ids_with_image_features({
-        inputs_embeds,
-        image_features,
-        input_ids,
-        attention_mask,
-    }) {
-        // @ts-ignore
-        const { image_token_id } = this.config;
-        const image_tokens = input_ids.tolist().map(ids =>
-            ids.reduce((acc, x, idx) => {
-                if (x == image_token_id) acc.push(idx);
-                return acc;
-            }, [])
-        );
-        const n_image_tokens = image_tokens.reduce((acc, x) => acc + x.length, 0);
-        const n_image_features = image_features.dims[0];
-        if (n_image_tokens !== n_image_features) {
-            throw new Error(`Image features and image tokens do not match: tokens: ${n_image_tokens}, features ${n_image_features}`);
-        }
-
-        // Equivalent to performing a masked_scatter
-        let img = 0;
-        for (let i = 0; i < image_tokens.length; ++i) {
-            const tokens = image_tokens[i];
-            const embeds = inputs_embeds[i];
-            for (let j = 0; j < tokens.length; ++j) {
-                embeds[tokens[j]].data.set(image_features[img++].data)
-            }
-        }
-        return { inputs_embeds, attention_mask }
+    _merge_input_ids_with_image_features(kwargs) {
+        return default_merge_input_ids_with_image_features({
+            // @ts-ignore
+            image_token_id: this.config.image_token_id,
+            ...kwargs
+        })
     }
 
     prepare_inputs_for_generation(input_ids, model_inputs, generation_config) {
@@ -6914,6 +6987,7 @@ const MODEL_FOR_QUESTION_ANSWERING_MAPPING_NAMES = new Map([
 
 const MODEL_FOR_VISION_2_SEQ_MAPPING_NAMES = new Map([
     ['vision-encoder-decoder', ['VisionEncoderDecoderModel', VisionEncoderDecoderModel]],
+    ['idefics3', ['Idefics3ForConditionalGeneration', Idefics3ForConditionalGeneration]],
 ]);
 
 const MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES = new Map([
@@ -6922,6 +6996,7 @@ const MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES = new Map([
     ['moondream1', ['Moondream1ForConditionalGeneration', Moondream1ForConditionalGeneration]],
     ['florence2', ['Florence2ForConditionalGeneration', Florence2ForConditionalGeneration]],
     ['qwen2-vl', ['Qwen2VLForConditionalGeneration', Qwen2VLForConditionalGeneration]],
+    ['idefics3', ['Idefics3ForConditionalGeneration', Idefics3ForConditionalGeneration]],
 ]);
 
 const MODEL_FOR_DOCUMENT_QUESTION_ANSWERING_MAPPING_NAMES = new Map([

@@ -36,6 +36,27 @@ QUANTIZE_SUFFIX_MAPPING = {
 
 QUANTIZE_OPTIONS = tuple(x.value for x in QuantMode)
 
+# A list of operators that, when detected in a model, should select QUInt8 as the weight type for 8-bit quantization.
+QUINT8_OPS = (
+    # NOTE:
+    # As of 2024/11/29, the latest version of onnxruntime-web is 1.20.1, and does not support INT8 weights for Conv layers.
+    # If you attempt to run a model with INT8 weights for Conv layers, you will get an error like:
+    # `Can't create a session. ERROR_CODE: 9, ERROR_MESSAGE: Could not find an implementation for ConvInteger(10) node with name '/.../Conv_quant'`
+    #
+    # For this reason, we choose model weight types to ensure compatibility with onnxruntime-web.
+    #
+    # As per docs, signed weight type (QInt8) is faster on most CPUs, so, we use that unless the model contains a Conv layer.
+    # For more information, see:
+    #  - https://github.com/microsoft/onnxruntime/issues/3130#issuecomment-1105200621
+    #  - https://github.com/microsoft/onnxruntime/issues/2339
+    "Conv",
+
+    # Models produced by onnxruntime-genai contain optimized operators that perform better with QUInt8 weights.
+    "GroupQueryAttention",
+    "MultiHeadAttention",
+
+    # TODO: "SimplifiedLayerNormalization", "SkipSimplifiedLayerNormalization"
+)
 
 @dataclass
 class IOArguments:
@@ -326,20 +347,11 @@ def quantize(input_folder, output_folder, quantization_args: QuantizationArgumen
 
             elif mode in (QuantMode.Q8, QuantMode.QI8, QuantMode.QU8):
                 if mode == QuantMode.Q8:
-                    # NOTE:
-                    # As of 2024/06/28, the current latest version of onnxruntime-web is 1.18.0, and does not support INT8 weights for Conv layers.
-                    # If you attempt to run a model with INT8 weights for Conv layers, you will get an error like:
-                    # `Can't create a session. ERROR_CODE: 9, ERROR_MESSAGE: Could not find an implementation for ConvInteger(10) node with name '/.../Conv_quant'`
-                    #
-                    # For this reason, we choose model weight types to ensure compatibility with onnxruntime-web.
-                    #
-                    # As per docs, signed weight type (QInt8) is faster on most CPUs, so, we use that unless the model contains a Conv layer.
-                    # For more information, see:
-                    #  - https://github.com/microsoft/onnxruntime/issues/3130#issuecomment-1105200621
-                    #  - https://github.com/microsoft/onnxruntime/issues/2339
                     op_types = get_operators(model)
                     weight_type = (
-                        QuantType.QUInt8 if "Conv" in op_types else QuantType.QInt8
+                        QuantType.QUInt8
+                        if any(x in QUINT8_OPS for x in op_types)
+                        else QuantType.QInt8
                     )
 
                 elif mode == QuantMode.QI8:

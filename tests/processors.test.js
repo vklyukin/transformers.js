@@ -1,5 +1,5 @@
 import { env, AutoProcessor, AutoImageProcessor, RawImage } from "../src/transformers.js";
-import { init, MAX_TEST_EXECUTION_TIME } from "./init.js";
+import { init, MAX_TEST_TIME } from "./init.js";
 import { compare } from "./test_utils.js";
 
 // Initialise the testing environment
@@ -47,27 +47,30 @@ const MODELS = {
   // efficientnet: 'Xenova/efficientnet-b0',
   florence2: "Xenova/tiny-random-Florence2ForConditionalGeneration",
   qwen2_vl: "hf-internal-testing/tiny-random-Qwen2VLForConditionalGeneration",
+  idefics3: "hf-internal-testing/tiny-random-Idefics3ForConditionalGeneration",
 };
 
+const BASE_URL = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/";
 const TEST_IMAGES = {
-  white_image: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/white-image.png",
-  pattern_3x3: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/pattern_3x3.png",
-  pattern_3x5: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/pattern_3x5.png",
-  checkerboard_8x8: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/checkerboard_8x8.png",
-  checkerboard_64x32: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/checkerboard_64x32.png",
-  receipt: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/receipt.png",
-  tiger: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/tiger.jpg",
-  paper: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/nougat_paper.png",
-  cats: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/cats.jpg",
+  white_image: BASE_URL + "white-image.png",
+  pattern_3x3: BASE_URL + "pattern_3x3.png",
+  pattern_3x5: BASE_URL + "pattern_3x5.png",
+  checkerboard_8x8: BASE_URL + "checkerboard_8x8.png",
+  checkerboard_64x32: BASE_URL + "checkerboard_64x32.png",
+  gradient_1280x640: BASE_URL + "gradient_1280x640.png",
+  receipt: BASE_URL + "receipt.png",
+  tiger: BASE_URL + "tiger.jpg",
+  paper: BASE_URL + "nougat_paper.png",
+  cats: BASE_URL + "cats.jpg",
 
   // grayscale image
   skateboard: "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/blog/ml-web-games/skateboard.png",
 
-  vitmatte_image: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/vitmatte_image.png",
-  vitmatte_trimap: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/vitmatte_trimap.png",
+  vitmatte_image: BASE_URL + "vitmatte_image.png",
+  vitmatte_trimap: BASE_URL + "vitmatte_trimap.png",
 
-  beetle: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/beetle.png",
-  book_cover: "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/book-cover.png",
+  beetle: BASE_URL + "beetle.png",
+  book_cover: BASE_URL + "book-cover.png",
 };
 
 describe("Processors", () => {
@@ -96,7 +99,7 @@ describe("Processors", () => {
           compare(avg(pixel_values.data), 0.5);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // SamProcessor/SamImageProcessor
@@ -168,7 +171,7 @@ describe("Processors", () => {
           compare(input_boxes.tolist(), [[[0, 341.3333, 682.6667, 682.6667]]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DonutProcessor/DonutFeatureExtractor
@@ -190,7 +193,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[1280, 853]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // ConvNextFeatureExtractor
@@ -210,7 +213,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // ViTFeatureExtractor
@@ -230,7 +233,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // MobileViTFeatureExtractor
@@ -250,7 +253,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[256, 256]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // MobileViTFeatureExtractor
@@ -272,7 +275,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[28, 28]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // MobileViTImageProcessor
@@ -296,7 +299,7 @@ describe("Processors", () => {
           compare(pixel_values.data.slice(0, 3), [0.24313725531101227, 0.250980406999588, 0.364705890417099]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DeiTFeatureExtractor
@@ -316,7 +319,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // BeitFeatureExtractor
@@ -336,7 +339,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DetrFeatureExtractor
@@ -359,7 +362,7 @@ describe("Processors", () => {
           compare(avg(pixel_mask.data), 1);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // YolosFeatureExtractor
@@ -379,7 +382,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[888, 1333]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DPTFeatureExtractor
@@ -400,7 +403,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[384, 384]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // GLPNForDepthEstimation
@@ -432,7 +435,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[384, 608]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // NougatImageProcessor
@@ -453,7 +456,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[833, 672]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // OwlViTFeatureExtractor
@@ -489,7 +492,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // JinaCLIPImageProcessor
@@ -510,7 +513,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[512, 512]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // VitMatteImageProcessor
@@ -561,7 +564,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[5, 3]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // BitImageProcessor
@@ -581,7 +584,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DPTImageProcessor
@@ -616,7 +619,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[252, 518]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // TODO: Add back
@@ -635,9 +638,9 @@ describe("Processors", () => {
     //         compare(original_sizes, [[480, 640]]);
     //         compare(reshaped_input_sizes, [[224, 224]]);
     //     }
-    // }, MAX_TEST_EXECUTION_TIME);
+    // }, MAX_TEST_TIME);
 
-    // Qwen2VLProcessor
+    // Qwen2VLImageProcessor
     // - custom image processing (min_pixels, max_pixels)
     it(
       MODELS.qwen2_vl,
@@ -656,7 +659,103 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
+    );
+
+    // Idefics3ImageProcessor
+    // - custom image processing (patching)
+    it(
+      MODELS.idefics3,
+      async () => {
+        const processor = await AutoImageProcessor.from_pretrained(MODELS.idefics3);
+
+        const image = await load_image(TEST_IMAGES.gradient_1280x640);
+        const image_1 = await image.resize(1600, 1067);
+        const image_2 = await image.resize(224, 224);
+
+        const white_image = await load_image(TEST_IMAGES.white_image);
+        const white_image_1 = await white_image.resize(1600, 1067);
+        const white_image_2 = await white_image.resize(224, 224);
+
+        {
+          // test no image splitting
+          const { pixel_values, rows, cols } = await processor(image, { do_image_splitting: false, return_row_col_info: true });
+          compare(pixel_values.dims, [1, 1, 3, 364, 364]);
+          compare(
+            pixel_values.mean().item(),
+            -0.001035306602716446,
+            0.1, // threshold
+          );
+          compare(rows, [[0]]);
+          compare(cols, [[0]]);
+        }
+
+        {
+          // test batched no image splitting
+          const { pixel_values, pixel_attention_mask, rows, cols } = await processor([[white_image_1], [white_image_2], [white_image_1, white_image_2]], { do_image_splitting: false, return_row_col_info: true });
+          compare(pixel_values.dims, [3, 2, 3, 364, 364]);
+          compare(
+            pixel_values.mean().item(),
+            2 / 3,
+            0.01, // threshold
+          );
+          compare(pixel_attention_mask.dims, [3, 2, 364, 364]);
+          compare(
+            pixel_attention_mask.to("float32").mean().item(),
+            2 / 3,
+            0.001, // threshold
+          );
+          compare(rows, [[0], [0], [0, 0]]);
+          compare(cols, [[0], [0], [0, 0]]);
+
+          // Test that the order of the pixel attention mask matches the python implementation
+          compare(
+            pixel_attention_mask.data.reduce((a, b, i) => a + i * b, 0),
+            228217205216,
+          );
+        }
+
+        {
+          // test correct patching
+          const { pixel_values, rows, cols } = await processor(image, { return_row_col_info: true });
+          compare(pixel_values.dims, [1, 9, 3, 364, 364]);
+          compare(
+            pixel_values.flatten(2).mean(2).tolist(),
+            [[-0.7012196183204651, -0.30104631185531616, 0.09912905097007751, 0.49929487705230713, -0.5011996626853943, -0.10103467106819153, 0.2991456389427185, 0.6993265151977539, -0.0010353063698858023]],
+            0.1, // threshold
+          );
+          compare(rows, [[2]]);
+          compare(cols, [[4]]);
+        }
+
+        {
+          // unbatched, single image
+          const { pixel_values, rows, cols } = await processor(image_1, { return_row_col_info: true });
+          compare(pixel_values.dims, [1, 13, 3, 364, 364]);
+
+          compare(rows, [[3]]);
+          compare(cols, [[4]]);
+        }
+
+        {
+          // unbatched, multiple images
+          const { pixel_values, rows, cols } = await processor([image_1, image_2], { return_row_col_info: true });
+          compare(pixel_values.dims, [1, 30, 3, 364, 364]);
+
+          compare(rows, [[3, 4]]);
+          compare(cols, [[4, 4]]);
+        }
+
+        {
+          // batched, multiple images
+          const { pixel_values, rows, cols } = await processor([[image_1], [image_1, image_2]], { return_row_col_info: true });
+          compare(pixel_values.dims, [2, 30, 3, 364, 364]);
+          compare(rows, [[3], [3, 4]]);
+          compare(cols, [[4], [4, 4]]);
+        }
+      },
+      // NOTE: We set a higher timeout for this test
+      2 * MAX_TEST_TIME,
     );
   });
 
@@ -681,7 +780,7 @@ describe("Processors", () => {
         expect(input_features.data[81]).toBeCloseTo(0.10727232694625854);
         expect(input_features.data[3001]).toBeCloseTo(0.2555035352706909);
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     it(
@@ -716,7 +815,7 @@ describe("Processors", () => {
           expect(input_values.data[10000]).toBeCloseTo(0.46703237295150757);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     it(
@@ -757,7 +856,7 @@ describe("Processors", () => {
           expect(sum(attention_mask.data)).toEqual(30);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     it(
@@ -810,7 +909,7 @@ describe("Processors", () => {
           expect(input_features.data[64063]).toBeCloseTo(-100.0);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     it(
@@ -849,7 +948,7 @@ describe("Processors", () => {
           expect(input_features.data.at(-1)).toBeCloseTo(-2.2504329681396484);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
   });
 
@@ -1059,7 +1158,7 @@ describe("Processors", () => {
           }
         });
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     describe(
@@ -1095,7 +1194,7 @@ describe("Processors", () => {
           compare(image_grid_thw.dims, [1, 3]);
         });
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
   });
 });

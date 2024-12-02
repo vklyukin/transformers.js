@@ -32,6 +32,8 @@ const DataTypeMap = Object.freeze({
     int64: BigInt64Array,
     uint64: BigUint64Array,
     bool: Uint8Array,
+    uint4: Uint8Array,
+    int4: Int8Array,
 });
 
 /**
@@ -1353,7 +1355,7 @@ function fullHelper(size, fill_value, dtype, cls) {
 /**
  * Creates a tensor of size size filled with fill_value. The tensor's dtype is inferred from fill_value.
  * @param {number[]} size A sequence of integers defining the shape of the output tensor.
- * @param {number|bigint} fill_value The value to fill the output tensor with.
+ * @param {number|bigint|boolean} fill_value The value to fill the output tensor with.
  * @returns {Tensor} The filled tensor.
  */
 export function full(size, fill_value) {
@@ -1365,6 +1367,9 @@ export function full(size, fill_value) {
     } else if (typeof fill_value === 'bigint') {
         dtype = 'int64';
         typedArrayCls = BigInt64Array;
+    } else if (typeof fill_value === 'boolean') {
+        dtype = 'bool';
+        typedArrayCls = Uint8Array;
     } else {
         // TODO: support other dtypes
         throw new Error(`Unsupported data type: ${typeof fill_value}`);
