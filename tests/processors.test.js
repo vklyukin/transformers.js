@@ -701,7 +701,7 @@ describe("Processors", () => {
           );
           compare(pixel_attention_mask.dims, [3, 2, 364, 364]);
           compare(
-            pixel_attention_mask.mean().item(),
+            pixel_attention_mask.to('float32').mean().item(),
             2 / 3,
             0.001, // threshold
           );
