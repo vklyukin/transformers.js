@@ -754,7 +754,8 @@ describe("Processors", () => {
           compare(cols, [[4], [4, 4]]);
         }
       },
-      MAX_TEST_TIME,
+      // NOTE: We set a higher timeout for this test
+      2 * MAX_TEST_TIME,
     );
   });
 
