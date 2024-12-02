@@ -1,5 +1,5 @@
 import { env, AutoProcessor, AutoImageProcessor, RawImage } from "../src/transformers.js";
-import { init, MAX_TEST_EXECUTION_TIME } from "./init.js";
+import { init, MAX_TEST_TIME } from "./init.js";
 import { compare } from "./test_utils.js";
 
 // Initialise the testing environment
@@ -99,7 +99,7 @@ describe("Processors", () => {
           compare(avg(pixel_values.data), 0.5);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // SamProcessor/SamImageProcessor
@@ -171,7 +171,7 @@ describe("Processors", () => {
           compare(input_boxes.tolist(), [[[0, 341.3333, 682.6667, 682.6667]]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DonutProcessor/DonutFeatureExtractor
@@ -193,7 +193,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[1280, 853]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // ConvNextFeatureExtractor
@@ -213,7 +213,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // ViTFeatureExtractor
@@ -233,7 +233,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // MobileViTFeatureExtractor
@@ -253,7 +253,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[256, 256]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // MobileViTFeatureExtractor
@@ -275,7 +275,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[28, 28]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // MobileViTImageProcessor
@@ -299,7 +299,7 @@ describe("Processors", () => {
           compare(pixel_values.data.slice(0, 3), [0.24313725531101227, 0.250980406999588, 0.364705890417099]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DeiTFeatureExtractor
@@ -319,7 +319,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // BeitFeatureExtractor
@@ -339,7 +339,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DetrFeatureExtractor
@@ -362,7 +362,7 @@ describe("Processors", () => {
           compare(avg(pixel_mask.data), 1);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // YolosFeatureExtractor
@@ -382,7 +382,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[888, 1333]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DPTFeatureExtractor
@@ -403,7 +403,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[384, 384]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // GLPNForDepthEstimation
@@ -435,7 +435,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[384, 608]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // NougatImageProcessor
@@ -456,7 +456,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[833, 672]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // OwlViTFeatureExtractor
@@ -492,7 +492,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // JinaCLIPImageProcessor
@@ -513,7 +513,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[512, 512]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // VitMatteImageProcessor
@@ -564,7 +564,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[5, 3]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // BitImageProcessor
@@ -584,7 +584,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // DPTImageProcessor
@@ -619,7 +619,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[252, 518]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // TODO: Add back
@@ -638,7 +638,7 @@ describe("Processors", () => {
     //         compare(original_sizes, [[480, 640]]);
     //         compare(reshaped_input_sizes, [[224, 224]]);
     //     }
-    // }, MAX_TEST_EXECUTION_TIME);
+    // }, MAX_TEST_TIME);
 
     // Qwen2VLImageProcessor
     // - custom image processing (min_pixels, max_pixels)
@@ -659,7 +659,7 @@ describe("Processors", () => {
           compare(reshaped_input_sizes, [[224, 224]]);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     // Idefics3ImageProcessor
@@ -670,9 +670,12 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.idefics3);
 
         const image = await load_image(TEST_IMAGES.gradient_1280x640);
-
         const image_1 = await image.resize(1600, 1067);
         const image_2 = await image.resize(224, 224);
+        
+        const white_image = await load_image(TEST_IMAGES.white_image);
+        const white_image_1 = await white_image.resize(1600, 1067);
+        const white_image_2 = await white_image.resize(224, 224);
 
         {
           // test no image splitting
@@ -685,6 +688,29 @@ describe("Processors", () => {
           );
           compare(rows, [[0]]);
           compare(cols, [[0]]);
+        }
+
+        {
+          // test batched no image splitting
+          const { pixel_values, pixel_attention_mask, rows, cols } = await processor([
+            [white_image_1],
+            [white_image_2],
+            [white_image_1, white_image_2],
+          ], { do_image_splitting: false, return_row_col_info: true });
+          compare(pixel_values.dims, [3, 2, 3, 364, 364]);
+          compare(
+            pixel_values.mean().item(),
+            2/3,
+            0.01, // threshold
+          );
+          compare(pixel_attention_mask.dims, [3, 2, 364, 364]);
+          compare(
+            pixel_attention_mask.mean().item(),
+            2/3,
+            0.001, // threshold
+          );
+          compare(rows, [[0], [0], [0, 0]]);
+          compare(cols, [[0], [0], [0, 0]]);
         }
 
         {
@@ -718,18 +744,18 @@ describe("Processors", () => {
           compare(cols, [[4, 4]]);
         }
 
-        // TODO:
-        // { // batched, multiple images
-        //   const { pixel_values, rows, cols }  = await processor([
-        //       [image_1],
-        //       [image_1, image_2],
-        //   ], { return_row_col_info: true });
-        //   compare(pixel_values.dims, [2, 30, 3, 364, 364]);
-        //   compare(rows, [[3], [3, 4]]);
-        //   compare(cols, [[4], [4, 4]]);
-        // }
+        {
+          // batched, multiple images
+          const { pixel_values, rows, cols }  = await processor([
+              [image_1],
+              [image_1, image_2],
+          ], { return_row_col_info: true });
+          compare(pixel_values.dims, [2, 30, 3, 364, 364]);
+          compare(rows, [[3], [3, 4]]);
+          compare(cols, [[4], [4, 4]]);
+        }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
   });
 
@@ -754,7 +780,7 @@ describe("Processors", () => {
         expect(input_features.data[81]).toBeCloseTo(0.10727232694625854);
         expect(input_features.data[3001]).toBeCloseTo(0.2555035352706909);
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     it(
@@ -789,7 +815,7 @@ describe("Processors", () => {
           expect(input_values.data[10000]).toBeCloseTo(0.46703237295150757);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     it(
@@ -830,7 +856,7 @@ describe("Processors", () => {
           expect(sum(attention_mask.data)).toEqual(30);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     it(
@@ -883,7 +909,7 @@ describe("Processors", () => {
           expect(input_features.data[64063]).toBeCloseTo(-100.0);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     it(
@@ -922,7 +948,7 @@ describe("Processors", () => {
           expect(input_features.data.at(-1)).toBeCloseTo(-2.2504329681396484);
         }
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
   });
 
@@ -1132,7 +1158,7 @@ describe("Processors", () => {
           }
         });
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
 
     describe(
@@ -1168,7 +1194,7 @@ describe("Processors", () => {
           compare(image_grid_thw.dims, [1, 3]);
         });
       },
-      MAX_TEST_EXECUTION_TIME,
+      MAX_TEST_TIME,
     );
   });
 });
