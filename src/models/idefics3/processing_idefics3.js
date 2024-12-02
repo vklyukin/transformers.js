@@ -11,8 +11,8 @@ import { count } from "../../utils/core.js";
  */
 function _prompt_split_image(image_seq_len, image_rows, image_cols, fake_token_around_image, image_token, global_img_token) {
     let text_split_images = "";
-    for (let n_h = 0; n_h < image_rows; n_h++) {
-        for (let n_w = 0; n_w < image_cols; n_w++) {
+    for (let n_h = 0; n_h < image_rows; ++n_h) {
+        for (let n_w = 0; n_w < image_cols; ++n_w) {
             text_split_images += (
                 fake_token_around_image +
                 `<row_${n_h + 1}_col_${n_w + 1}>` +
