@@ -64,6 +64,10 @@ export class Idefics3Processor extends Processor {
     static tokenizer_class = AutoTokenizer
     static uses_processor_config = true;
 
+    fake_image_token = "<fake_token_around_image>";
+    image_token = "<image>";
+    global_img_token = "<global-img>";
+
     /**
      * 
      * @param {string|string[]} text 
@@ -87,12 +91,7 @@ export class Idefics3Processor extends Processor {
         const image_rows = image_inputs.rows ?? [new Array(text.length).fill(0)];
         const image_cols = image_inputs.cols ?? [new Array(text.length).fill(0)];
 
-        // TODO: Move to constructor
         const image_seq_len = this.config.image_seq_len;
-        const fake_image_token = "<fake_token_around_image>";
-        const image_token = "<image>";
-        const global_img_token = "<global-img>";
-
         const n_images_in_text = []
         const prompt_strings = [];
         for (let i = 0; i < text.length; ++i) {
@@ -100,7 +99,7 @@ export class Idefics3Processor extends Processor {
             const sample_rows = image_rows[i];
             const sample_cols = image_cols[i];
 
-            n_images_in_text.push(count(sample, image_token));
+            n_images_in_text.push(count(sample, this.image_token));
 
             // Replace the image token with fake tokens around the expanded image token sequence of length `image_seq_len`
             const image_prompt_strings = sample_rows.map(
@@ -108,13 +107,13 @@ export class Idefics3Processor extends Processor {
                     n_rows,
                     sample_cols[j],
                     image_seq_len,
-                    fake_image_token,
-                    image_token,
-                    global_img_token
+                    this.fake_image_token,
+                    this.image_token,
+                    this.global_img_token,
                 )
             );
 
-            const split_sample = sample.split(image_token);
+            const split_sample = sample.split(this.image_token);
             if (split_sample.length === 0) {
                 throw new Error("The image token should be present in the text.");
             }
