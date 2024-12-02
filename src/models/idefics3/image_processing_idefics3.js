@@ -120,22 +120,23 @@ export class Idefics3ImageProcessor extends ImageProcessor {
             all_pixel_values.push(cat(images_tensor, 0));
         }
 
+        const batch_size = all_pixel_values.length;
+        const [n, c, h, w] = all_pixel_values[0].dims;
+
         // Stack pixel values
         let pixel_values;
         let pixel_attention_mask;
-        if (all_pixel_values.length === 1) {
-            pixel_values = all_pixel_values[0];
-            pixel_values.unsqueeze_(0);
+        if (batch_size === 1) {
+            pixel_values = all_pixel_values[0].unsqueeze_(0);
+            pixel_attention_mask = full([batch_size, n, h, w], true);
         } else {
             // Add padding (if necessary) to images with less patches than the maximum number of patches
             const max_num_patches = Math.max(...all_pixel_values.map(x => x.dims.at(0)));
 
-            const [c, h, w] = all_pixel_values[0].dims.slice(1);
-
-            pixel_attention_mask = full([all_pixel_values.length, max_num_patches, h, w], 1);
+            pixel_attention_mask = full([batch_size, max_num_patches, h, w], true);
             const pixel_attention_mask_data = pixel_attention_mask.data;
             const pixel_attention_mask_stride = max_num_patches * h * w;
-            for (let i = 0; i < all_pixel_values.length; ++i) {
+            for (let i = 0; i < batch_size; ++i) {
                 const num_patches = all_pixel_values[i].dims[0];
                 if (num_patches < max_num_patches) {
                     all_pixel_values[i] = cat([
@@ -145,7 +146,7 @@ export class Idefics3ImageProcessor extends ImageProcessor {
 
                     const start_offset = i * pixel_attention_mask_stride + num_patches * h * w;
                     const end_offset = (i + 1) * pixel_attention_mask_stride;
-                    pixel_attention_mask_data.fill(0, start_offset, end_offset);
+                    pixel_attention_mask_data.fill(false, start_offset, end_offset);
                 }
             }
             pixel_values = stack(all_pixel_values, 0);
