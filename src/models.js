@@ -182,14 +182,19 @@ async function getSession(pretrained_model_name_or_path, fileName, options) {
         }
     }
 
-    if (dtype === 'auto') {
-        const config_dtype = custom_config.dtype?.[fileName];
-        if (config_dtype === 'auto') {
-            // Choose default dtype based on device, falling back to fp32
-            dtype = DEFAULT_DEVICE_DTYPE_MAPPING[selectedDevice] ?? DATA_TYPES.fp32;
-        } else {
+    if (dtype === DATA_TYPES.auto) {
+        // Try to choose the auto dtype based on the custom config
+        let config_dtype = custom_config.dtype;
+        if (typeof config_dtype !== 'string') {
+            config_dtype = config_dtype[fileName];
+        }
+
+        if (config_dtype && config_dtype !== DATA_TYPES.auto && DATA_TYPES.hasOwnProperty(config_dtype)) {
             // Defined by the custom config, and is not "auto"
             dtype = config_dtype;
+        } else {
+            // Choose default dtype based on device, falling back to fp32
+            dtype = DEFAULT_DEVICE_DTYPE_MAPPING[selectedDevice] ?? DATA_TYPES.fp32;
         }
     }
 
