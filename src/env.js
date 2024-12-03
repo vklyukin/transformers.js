@@ -29,9 +29,9 @@ import url from 'url';
 const VERSION = '3.1.0';
 
 // Check if various APIs are available (depends on environment)
-const IS_BROWSER_ENV = typeof self !== 'undefined';
-const IS_WEBWORKER_ENV = IS_BROWSER_ENV && self.constructor.name === 'DedicatedWorkerGlobalScope';
-const IS_WEB_CACHE_AVAILABLE = IS_BROWSER_ENV && 'caches' in self;
+const IS_BROWSER_ENV = typeof window !== "undefined" && typeof window.document !== "undefined";
+const IS_WEBWORKER_ENV = typeof self !== "undefined"  && self.constructor?.name === 'DedicatedWorkerGlobalScope';
+const IS_WEB_CACHE_AVAILABLE = typeof self !== "undefined" && 'caches' in self;
 const IS_WEBGPU_AVAILABLE = typeof navigator !== 'undefined' && 'gpu' in navigator;
 const IS_WEBNN_AVAILABLE = typeof navigator !== 'undefined' && 'ml' in navigator;
 
@@ -44,7 +44,7 @@ const IS_PATH_AVAILABLE = !isEmpty(path);
  * A read-only object containing information about the APIs available in the current environment.
  */
 export const apis = Object.freeze({
-    /** Whether we are running in a browser environment */
+    /** Whether we are running in a browser environment (and not a web worker) */
     IS_BROWSER_ENV,
 
     /** Whether we are running in a web worker environment */
@@ -137,7 +137,7 @@ export const env = {
     remoteHost: 'https://huggingface.co/',
     remotePathTemplate: '{model}/resolve/{revision}/',
 
-    allowLocalModels: !IS_BROWSER_ENV,
+    allowLocalModels: !(IS_BROWSER_ENV || IS_WEBWORKER_ENV),
     localModelPath: localModelPath,
     useFS: IS_FS_AVAILABLE,
 
