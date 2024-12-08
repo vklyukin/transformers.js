@@ -35,7 +35,7 @@ const generate = async (model, tokenizer, text, options) => {
 describe("Generation parameters", () => {
   // List all models which will be tested
   const models = [
-    "hf-internal-testing/tiny-random-T5ForConditionalGeneration", //
+    "hf-internal-testing/tiny-random-T5ForConditionalGeneration", // encoder-decoder
     "hf-internal-testing/tiny-random-LlamaForCausalLM", // decoder-only
   ];
   const DUMMY_TEXT = "hello";
