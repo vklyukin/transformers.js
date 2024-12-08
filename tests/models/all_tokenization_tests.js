@@ -3,7 +3,7 @@ export * as BertTokenizer from "./bert/test_tokenization_bert.js";
 export * as BlenderbotSmallTokenizer from "./blenderbot_small/test_tokenization_blenderbot_small.js";
 export * as BloomTokenizer from "./bloom/test_tokenization_bloom.js";
 export * as CLIPTokenizer from "./clip/test_tokenization_clip.js";
-export * as DebertaV2Tokenizer from "./deberta-v2/test_tokenization_deberta-v2.js";
+export * as DebertaV2Tokenizer from "./deberta_v2/test_tokenization_deberta_v2.js";
 export * as DistilBertTokenizer from "./distilbert/test_tokenization_distilbert.js";
 export * as EsmTokenizer from "./esm/test_tokenization_esm.js";
 export * as FalconTokenizer from "./falcon/test_tokenization_falcon.js";
