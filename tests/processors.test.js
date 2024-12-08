@@ -1,4 +1,5 @@
 import { env, AutoProcessor, AutoImageProcessor, RawImage } from "../src/transformers.js";
+import { load_cached_image } from "./asset_cache.js";
 import { init, MAX_TEST_TIME } from "./init.js";
 import { compare } from "./test_utils.js";
 
@@ -9,18 +10,6 @@ env.useFSCache = false;
 
 const sum = (array) => Number(array.reduce((a, b) => a + b, array instanceof BigInt64Array ? 0n : 0));
 const avg = (array) => sum(array) / array.length;
-
-/** @type {Map<string, RawImage>} */
-const IMAGE_CACHE = new Map();
-const load_image = async (url) => {
-  const cached = IMAGE_CACHE.get(url);
-  if (cached) {
-    return cached;
-  }
-  const image = await RawImage.fromURL(url);
-  IMAGE_CACHE.set(url, image);
-  return image;
-};
 
 const MODELS = {
   swin2sr: "Xenova/swin2SR-classical-sr-x2-64",
@@ -51,29 +40,6 @@ const MODELS = {
   paligemma: "hf-internal-testing/tiny-random-PaliGemmaForConditionalGeneration",
 };
 
-const BASE_URL = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/";
-const TEST_IMAGES = {
-  white_image: BASE_URL + "white-image.png",
-  pattern_3x3: BASE_URL + "pattern_3x3.png",
-  pattern_3x5: BASE_URL + "pattern_3x5.png",
-  checkerboard_8x8: BASE_URL + "checkerboard_8x8.png",
-  checkerboard_64x32: BASE_URL + "checkerboard_64x32.png",
-  gradient_1280x640: BASE_URL + "gradient_1280x640.png",
-  receipt: BASE_URL + "receipt.png",
-  tiger: BASE_URL + "tiger.jpg",
-  paper: BASE_URL + "nougat_paper.png",
-  cats: BASE_URL + "cats.jpg",
-
-  // grayscale image
-  skateboard: "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/blog/ml-web-games/skateboard.png",
-
-  vitmatte_image: BASE_URL + "vitmatte_image.png",
-  vitmatte_trimap: BASE_URL + "vitmatte_trimap.png",
-
-  beetle: BASE_URL + "beetle.png",
-  book_cover: BASE_URL + "book-cover.png",
-};
-
 describe("Processors", () => {
   describe("Image processors", () => {
     // Swin2SRImageProcessor
@@ -85,7 +51,7 @@ describe("Processors", () => {
 
         {
           // Pad to multiple of 8 (3x3 -> 8x8)
-          const image = await load_image(TEST_IMAGES.pattern_3x3);
+          const image = await load_cached_image("pattern_3x3");
           const { pixel_values } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 8, 8]);
@@ -94,7 +60,7 @@ describe("Processors", () => {
 
         {
           // Do not pad if already a multiple of 8 (8x8 -> 8x8)
-          const image = await load_image(TEST_IMAGES.checkerboard_8x8);
+          const image = await load_cached_image("checkerboard_8x8");
           const { pixel_values } = await processor(image);
           compare(pixel_values.dims, [1, 3, 8, 8]);
           compare(avg(pixel_values.data), 0.5);
@@ -113,7 +79,7 @@ describe("Processors", () => {
 
         {
           // without input points
-          const image = await load_image(TEST_IMAGES.pattern_3x3);
+          const image = await load_cached_image("pattern_3x3");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
           compare(pixel_values.dims, [1, 3, 1024, 1024]);
           compare(avg(pixel_values.data), -0.4505715670146813);
@@ -124,7 +90,7 @@ describe("Processors", () => {
 
         {
           // with input points
-          const image = await load_image(TEST_IMAGES.pattern_3x3);
+          const image = await load_cached_image("pattern_3x3");
           const { original_sizes, reshaped_input_sizes, input_points } = await processor(image, {
             input_points: [[[1, 2]]],
           });
@@ -136,7 +102,7 @@ describe("Processors", () => {
 
         {
           // multiple points with labels
-          const image = await load_image(TEST_IMAGES.pattern_3x3);
+          const image = await load_cached_image("pattern_3x3");
           const { original_sizes, reshaped_input_sizes, input_points, input_labels } = await processor(image, {
             input_points: [
               [
@@ -162,7 +128,7 @@ describe("Processors", () => {
 
         {
           // with input boxes
-          const image = await load_image(TEST_IMAGES.pattern_3x3);
+          const image = await load_cached_image("pattern_3x3");
           const { original_sizes, reshaped_input_sizes, input_boxes } = await processor(image, {
             input_boxes: [[[0, 1, 2, 2]]],
           });
@@ -184,7 +150,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS["donut-swin"]);
 
         {
-          const image = await load_image(TEST_IMAGES.receipt);
+          const image = await load_cached_image("receipt");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 1280, 960]);
@@ -204,7 +170,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.resnet);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 224, 224]);
@@ -224,7 +190,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.vit);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 224, 224]);
@@ -244,7 +210,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.mobilevit);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 256, 256]);
@@ -266,7 +232,7 @@ describe("Processors", () => {
 
         {
           // Tests grayscale image
-          const image = await load_image(TEST_IMAGES.skateboard);
+          const image = await load_cached_image("skateboard");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 1, 28, 28]);
@@ -287,7 +253,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.mobilevit_3);
 
         {
-          const image = await load_image(TEST_IMAGES.cats);
+          const image = await load_cached_image("cats");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 256, 256]);
@@ -310,7 +276,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.deit);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 224, 224]);
@@ -330,7 +296,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.beit);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 224, 224]);
@@ -350,7 +316,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.detr);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes, pixel_mask } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 888, 1333]);
@@ -373,7 +339,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.yolos);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 888, 1333]);
@@ -394,7 +360,7 @@ describe("Processors", () => {
 
         {
           // Tests grayscale image
-          const image = await load_image(TEST_IMAGES.cats);
+          const image = await load_cached_image("cats");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 384, 384]);
@@ -415,7 +381,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.glpn);
 
         {
-          const image = await load_image(TEST_IMAGES.cats);
+          const image = await load_cached_image("cats");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
           compare(pixel_values.dims, [1, 3, 480, 640]);
           compare(avg(pixel_values.data), 0.5186172404123327);
@@ -426,7 +392,7 @@ describe("Processors", () => {
 
         {
           // Tests input which is not a multiple of 32 ([408, 612] -> [384, 608])
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 384, 608]);
@@ -447,7 +413,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.nougat);
 
         {
-          const image = await load_image(TEST_IMAGES.paper);
+          const image = await load_cached_image("paper");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 896, 672]);
@@ -464,7 +430,7 @@ describe("Processors", () => {
     it(MODELS.owlvit, async () => {
       const processor = await AutoImageProcessor.from_pretrained(MODELS.owlvit);
       {
-        const image = await load_image(TEST_IMAGES.cats);
+        const image = await load_cached_image("cats");
         const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
         compare(pixel_values.dims, [1, 3, 768, 768]);
@@ -483,7 +449,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.clip);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 224, 224]);
@@ -504,7 +470,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.jina_clip);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 512, 512]);
@@ -528,8 +494,8 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.vitmatte);
 
         {
-          const image = await load_image(TEST_IMAGES.vitmatte_image);
-          const image2 = await load_image(TEST_IMAGES.vitmatte_trimap);
+          const image = await load_cached_image("vitmatte_image");
+          const image2 = await load_cached_image("vitmatte_trimap");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image, image2);
 
           compare(pixel_values.dims, [1, 4, 640, 960]);
@@ -548,8 +514,8 @@ describe("Processors", () => {
         }
 
         {
-          const image = await load_image(TEST_IMAGES.pattern_3x5);
-          const image2 = await load_image(TEST_IMAGES.pattern_3x5);
+          const image = await load_cached_image("pattern_3x5");
+          const image2 = await load_cached_image("pattern_3x5");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image, image2);
 
           compare(pixel_values.dims, [1, 4, 32, 32]);
@@ -575,7 +541,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.dinov2);
 
         {
-          const image = await load_image(TEST_IMAGES.tiger);
+          const image = await load_cached_image("tiger");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 224, 224]);
@@ -598,7 +564,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.dpt_2);
 
         {
-          const image = await load_image(TEST_IMAGES.cats);
+          const image = await load_cached_image("cats");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [1, 3, 518, 686]);
@@ -609,7 +575,7 @@ describe("Processors", () => {
         }
 
         {
-          const image = await load_image(TEST_IMAGES.checkerboard_64x32);
+          const image = await load_cached_image("checkerboard_64x32");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
           // NOTE: without bankers rounding, this would be [1, 3, 266, 518]
@@ -630,7 +596,7 @@ describe("Processors", () => {
     //     const processor = await AutoImageProcessor.from_pretrained(MODELS.efficientnet)
 
     //     {
-    //         const image = await load_image(TEST_IMAGES.cats);
+    //         const image = await load_cached_image("cats");
     //         const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
 
     //         compare(pixel_values.dims, [1, 3, 224, 224]);
@@ -649,7 +615,7 @@ describe("Processors", () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.qwen2_vl);
 
         {
-          const image = await load_image(TEST_IMAGES.white_image);
+          const image = await load_cached_image("white_image");
           const { pixel_values, image_grid_thw, original_sizes, reshaped_input_sizes } = await processor(image);
 
           compare(pixel_values.dims, [256, 1176]);
@@ -670,11 +636,11 @@ describe("Processors", () => {
       async () => {
         const processor = await AutoImageProcessor.from_pretrained(MODELS.idefics3);
 
-        const image = await load_image(TEST_IMAGES.gradient_1280x640);
+        const image = await load_cached_image("gradient_1280x640");
         const image_1 = await image.resize(1600, 1067);
         const image_2 = await image.resize(224, 224);
 
-        const white_image = await load_image(TEST_IMAGES.white_image);
+        const white_image = await load_cached_image("white_image");
         const white_image_1 = await white_image.resize(1600, 1067);
         const white_image_2 = await white_image.resize(224, 224);
 
@@ -960,8 +926,8 @@ describe("Processors", () => {
         beforeAll(async () => {
           processor = await AutoProcessor.from_pretrained(MODELS.florence2);
           images = {
-            beetle: await load_image(TEST_IMAGES.beetle),
-            book_cover: await load_image(TEST_IMAGES.book_cover),
+            beetle: await load_cached_image("beetle"),
+            book_cover: await load_cached_image("book_cover"),
           };
         });
 
@@ -1168,7 +1134,7 @@ describe("Processors", () => {
         beforeAll(async () => {
           processor = await AutoProcessor.from_pretrained(MODELS.qwen2_vl);
           images = {
-            white_image: await load_image(TEST_IMAGES.white_image),
+            white_image: await load_cached_image("white_image"),
           };
         });
 
@@ -1204,7 +1170,7 @@ describe("Processors", () => {
         beforeAll(async () => {
           processor = await AutoProcessor.from_pretrained(MODELS.paligemma);
           images = {
-            white_image: await load_image(TEST_IMAGES.white_image),
+            white_image: await load_cached_image("white_image"),
           };
         });
 
