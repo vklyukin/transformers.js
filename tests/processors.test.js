@@ -255,15 +255,16 @@ describe("Processors", () => {
         {
           const image = await load_cached_image("cats");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image);
+          const { data, dims } = pixel_values;
 
-          compare(pixel_values.dims, [1, 3, 256, 256]);
-          compare(avg(pixel_values.data), 0.5215385556221008);
+          compare(dims, [1, 3, 256, 256]);
+          compare(avg(data), 0.5215385556221008);
 
           compare(original_sizes, [[480, 640]]);
           compare(reshaped_input_sizes, [[256, 256]]);
 
           // Ensure RGB to BGR conversion
-          compare(pixel_values.data.slice(0, 3), [0.24313725531101227, 0.250980406999588, 0.364705890417099]);
+          compare(data.slice(0, 3), [0.24313725531101227, 0.250980406999588, 0.364705890417099]);
         }
       },
       MAX_TEST_TIME,
@@ -497,17 +498,18 @@ describe("Processors", () => {
           const image = await load_cached_image("vitmatte_image");
           const image2 = await load_cached_image("vitmatte_trimap");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image, image2);
+          const { data, dims } = pixel_values;
 
-          compare(pixel_values.dims, [1, 4, 640, 960]);
-          expect(avg(pixel_values.data)).toBeCloseTo(-0.4028555154800415);
-          expect(pixel_values.data[0]).toBeCloseTo(-0.9921568632125854);
-          expect(pixel_values.data[1]).toBeCloseTo(-0.9921568632125854);
-          expect(pixel_values.data[5]).toBeCloseTo(-1.0);
-          expect(pixel_values.data[640]).toBeCloseTo(-0.6784313917160034);
-          expect(pixel_values.data[641]).toBeCloseTo(-0.6705882549285889);
-          expect(pixel_values.data[640 * 960]).toBeCloseTo(-1.0);
-          expect(pixel_values.data[640 * 960 + 1]).toBeCloseTo(-1.0);
-          expect(pixel_values.data.at(-1)).toBeCloseTo(0.0);
+          compare(dims, [1, 4, 640, 960]);
+          expect(avg(data)).toBeCloseTo(-0.4028555154800415);
+          expect(data[0]).toBeCloseTo(-0.9921568632125854);
+          expect(data[1]).toBeCloseTo(-0.9921568632125854);
+          expect(data[5]).toBeCloseTo(-1.0);
+          expect(data[640]).toBeCloseTo(-0.6784313917160034);
+          expect(data[641]).toBeCloseTo(-0.6705882549285889);
+          expect(data[640 * 960]).toBeCloseTo(-1.0);
+          expect(data[640 * 960 + 1]).toBeCloseTo(-1.0);
+          expect(data.at(-1)).toBeCloseTo(0.0);
 
           compare(original_sizes, [[640, 960]]);
           compare(reshaped_input_sizes, [[640, 960]]);
@@ -517,15 +519,15 @@ describe("Processors", () => {
           const image = await load_cached_image("pattern_3x5");
           const image2 = await load_cached_image("pattern_3x5");
           const { pixel_values, original_sizes, reshaped_input_sizes } = await processor(image, image2);
-
-          compare(pixel_values.dims, [1, 4, 32, 32]);
-          expect(avg(pixel_values.data)).toBeCloseTo(-0.00867417361587286);
-          expect(pixel_values.data[0]).toBeCloseTo(-0.9921568632125854);
-          expect(pixel_values.data[1]).toBeCloseTo(-0.9686274528503418);
-          expect(pixel_values.data[5]).toBeCloseTo(0.0);
-          expect(pixel_values.data[32]).toBeCloseTo(-0.9215686321258545);
-          expect(pixel_values.data[33]).toBeCloseTo(-0.8980392217636108);
-          expect(pixel_values.data.at(-1)).toBeCloseTo(0.0);
+          const { data, dims } = pixel_values;
+          compare(dims, [1, 4, 32, 32]);
+          expect(avg(data)).toBeCloseTo(-0.00867417361587286);
+          expect(data[0]).toBeCloseTo(-0.9921568632125854);
+          expect(data[1]).toBeCloseTo(-0.9686274528503418);
+          expect(data[5]).toBeCloseTo(0.0);
+          expect(data[32]).toBeCloseTo(-0.9215686321258545);
+          expect(data[33]).toBeCloseTo(-0.8980392217636108);
+          expect(data.at(-1)).toBeCloseTo(0.0);
 
           compare(original_sizes, [[5, 3]]);
           compare(reshaped_input_sizes, [[5, 3]]);
@@ -739,12 +741,13 @@ describe("Processors", () => {
       async () => {
         const processor = await AutoProcessor.from_pretrained("Xenova/whisper-tiny.en");
         const { input_features } = await processor(audio);
-        compare(input_features.dims, [1, 80, 3000]);
-        expect(avg(input_features.data)).toBeCloseTo(-0.2813588131551941);
-        expect(input_features.data[0]).toBeCloseTo(0.33168578147888184);
-        expect(input_features.data[1]).toBeCloseTo(0.30986475944519043);
-        expect(input_features.data[81]).toBeCloseTo(0.10727232694625854);
-        expect(input_features.data[3001]).toBeCloseTo(0.2555035352706909);
+        const { dims, data } = input_features;
+        compare(dims, [1, 80, 3000]);
+        expect(avg(data)).toBeCloseTo(-0.2813588131551941);
+        expect(data[0]).toBeCloseTo(0.33168578147888184);
+        expect(data[1]).toBeCloseTo(0.30986475944519043);
+        expect(data[81]).toBeCloseTo(0.10727232694625854);
+        expect(data[3001]).toBeCloseTo(0.2555035352706909);
       },
       MAX_TEST_TIME,
     );
@@ -790,32 +793,34 @@ describe("Processors", () => {
         {
           // normal
           const { input_features, attention_mask } = await processor(audio);
-          compare(input_features.dims, [1, 649, 160]);
+          const { dims, data } = input_features;
+          compare(dims, [1, 649, 160]);
           compare(attention_mask.dims, [1, 649]);
 
-          expect(avg(input_features.data)).toBeCloseTo(-2.938903875815413e-8);
-          expect(input_features.data[0]).toBeCloseTo(1.1939343214035034);
-          expect(input_features.data[1]).toBeCloseTo(0.7874255180358887);
-          expect(input_features.data[160]).toBeCloseTo(-0.712975025177002);
-          expect(input_features.data[161]).toBeCloseTo(0.045802414417266846);
-          expect(input_features.data.at(-1)).toBeCloseTo(-1.3328346014022827);
+          expect(avg(data)).toBeCloseTo(-2.938903875815413e-8);
+          expect(data[0]).toBeCloseTo(1.1939343214035034);
+          expect(data[1]).toBeCloseTo(0.7874255180358887);
+          expect(data[160]).toBeCloseTo(-0.712975025177002);
+          expect(data[161]).toBeCloseTo(0.045802414417266846);
+          expect(data.at(-1)).toBeCloseTo(-1.3328346014022827);
 
           expect(sum(attention_mask.data)).toEqual(649);
         }
         {
           // padding (pad_to_multiple_of=2)
           const { input_features, attention_mask } = await processor(audio.slice(0, 10000));
+          const { dims, data } = input_features;
 
           // [1, 61, 80] -> [1, 62, 80] -> [1, 31, 160]
-          compare(input_features.dims, [1, 31, 160]);
+          compare(dims, [1, 31, 160]);
           compare(attention_mask.dims, [1, 31]);
 
-          expect(avg(input_features.data)).toBeCloseTo(0.01612919569015503);
-          expect(input_features.data[0]).toBeCloseTo(0.9657132029533386);
-          expect(input_features.data[1]).toBeCloseTo(0.12912897765636444);
-          expect(input_features.data[160]).toBeCloseTo(-1.2364212274551392);
-          expect(input_features.data[161]).toBeCloseTo(-0.9703778028488159);
-          expect(input_features.data.at(-1)).toBeCloseTo(1); // padding value
+          expect(avg(data)).toBeCloseTo(0.01612919569015503);
+          expect(data[0]).toBeCloseTo(0.9657132029533386);
+          expect(data[1]).toBeCloseTo(0.12912897765636444);
+          expect(data[160]).toBeCloseTo(-1.2364212274551392);
+          expect(data[161]).toBeCloseTo(-0.9703778028488159);
+          expect(data.at(-1)).toBeCloseTo(1); // padding value
 
           expect(sum(attention_mask.data)).toEqual(30);
         }
@@ -839,17 +844,18 @@ describe("Processors", () => {
           long_audio.set(audio, long_audio.length - audio.length);
 
           const { input_features } = await processor(long_audio);
-          compare(input_features.dims, [1, 1, 1001, 64]);
+          const { dims, data } = input_features;
+          compare(dims, [1, 1, 1001, 64]);
 
-          expect(avg(input_features.data)).toBeCloseTo(-37.94569396972656);
-          expect(input_features.data[0]).toBeCloseTo(-53.32647705078125);
-          expect(input_features.data[1]).toBeCloseTo(-47.76755142211914);
-          expect(input_features.data[65]).toBeCloseTo(-36.32261276245117);
-          expect(input_features.data[1002]).toBeCloseTo(-28.0314884185791);
-          expect(input_features.data[10000]).toBeCloseTo(-21.905902862548828);
-          expect(input_features.data[60000]).toBeCloseTo(-14.877863883972168);
-          expect(input_features.data[64062]).toBeCloseTo(-37.9784049987793);
-          expect(input_features.data[64063]).toBeCloseTo(-37.73963928222656);
+          expect(avg(data)).toBeCloseTo(-37.94569396972656);
+          expect(data[0]).toBeCloseTo(-53.32647705078125);
+          expect(data[1]).toBeCloseTo(-47.76755142211914);
+          expect(data[65]).toBeCloseTo(-36.32261276245117);
+          expect(data[1002]).toBeCloseTo(-28.0314884185791);
+          expect(data[10000]).toBeCloseTo(-21.905902862548828);
+          expect(data[60000]).toBeCloseTo(-14.877863883972168);
+          expect(data[64062]).toBeCloseTo(-37.9784049987793);
+          expect(data[64063]).toBeCloseTo(-37.73963928222656);
 
           // Reset Math.random
           Math.random = originalRandom;
@@ -857,19 +863,20 @@ describe("Processors", () => {
         {
           // padding
           const { input_features } = await processor(audio);
-          compare(input_features.dims, [1, 1, 1001, 64]);
+          const { data, dims } = input_features;
+          compare(dims, [1, 1, 1001, 64]);
 
-          expect(avg(input_features.data)).toBeCloseTo(-34.99049377441406);
-          expect(input_features.data[0]).toBeCloseTo(-21.32573890686035);
-          expect(input_features.data[1]).toBeCloseTo(-26.168411254882812);
-          expect(input_features.data[65]).toBeCloseTo(-29.716018676757812);
-          expect(input_features.data[1002]).toBeCloseTo(-32.16273498535156);
-          expect(input_features.data[10000]).toBeCloseTo(-19.9283390045166);
+          expect(avg(data)).toBeCloseTo(-34.99049377441406);
+          expect(data[0]).toBeCloseTo(-21.32573890686035);
+          expect(data[1]).toBeCloseTo(-26.168411254882812);
+          expect(data[65]).toBeCloseTo(-29.716018676757812);
+          expect(data[1002]).toBeCloseTo(-32.16273498535156);
+          expect(data[10000]).toBeCloseTo(-19.9283390045166);
 
           // padded values
-          expect(input_features.data[60000]).toBeCloseTo(-100.0);
-          expect(input_features.data[64062]).toBeCloseTo(-100.0);
-          expect(input_features.data[64063]).toBeCloseTo(-100.0);
+          expect(data[60000]).toBeCloseTo(-100.0);
+          expect(data[64062]).toBeCloseTo(-100.0);
+          expect(data[64063]).toBeCloseTo(-100.0);
         }
       },
       MAX_TEST_TIME,
@@ -883,32 +890,34 @@ describe("Processors", () => {
           // default
           const audio = new Float32Array(16000).map((_, i) => Math.sin(i / 100));
           const { input_features } = await processor(audio);
-          compare(input_features.dims, [1, 98, 80]);
+          const { dims, data } = input_features;
+          compare(dims, [1, 98, 80]);
 
-          expect(avg(input_features.data)).toBeCloseTo(5.461731689138105e-8);
-          expect(input_features.data[0]).toBeCloseTo(-0.19300270080566406);
-          expect(input_features.data[1]).toBeCloseTo(-0.05825042724609375);
-          expect(input_features.data[78]).toBeCloseTo(0.2683420181274414);
-          expect(input_features.data[79]).toBeCloseTo(0.26250171661376953);
-          expect(input_features.data[80]).toBeCloseTo(0.19062232971191406);
-          expect(input_features.data.at(-2)).toBeCloseTo(-0.43694400787353516);
-          expect(input_features.data.at(-1)).toBeCloseTo(-0.4266204833984375);
+          expect(avg(data)).toBeCloseTo(5.461731689138105e-8);
+          expect(data[0]).toBeCloseTo(-0.19300270080566406);
+          expect(data[1]).toBeCloseTo(-0.05825042724609375);
+          expect(data[78]).toBeCloseTo(0.2683420181274414);
+          expect(data[79]).toBeCloseTo(0.26250171661376953);
+          expect(data[80]).toBeCloseTo(0.19062232971191406);
+          expect(data.at(-2)).toBeCloseTo(-0.43694400787353516);
+          expect(data.at(-1)).toBeCloseTo(-0.4266204833984375);
         }
 
         {
           // pad to `min_num_frames`
           const audio = new Float32Array(3).map((_, i) => Math.sin(i / 100));
           const { input_features } = await processor(audio);
-          compare(input_features.dims, [1, 9, 80]);
+          const { dims, data } = input_features;
+          compare(dims, [1, 9, 80]);
 
-          expect(avg(input_features.data)).toBeCloseTo(-0.0000010093053181966146);
-          expect(input_features.data[0]).toBeCloseTo(20.761859893798828);
-          expect(input_features.data[1]).toBeCloseTo(21.02924346923828);
-          expect(input_features.data[78]).toBeCloseTo(19.083993911743164);
-          expect(input_features.data[79]).toBeCloseTo(18.003454208374023);
-          expect(input_features.data[80]).toBeCloseTo(-2.595233917236328);
-          expect(input_features.data.at(-2)).toBeCloseTo(-2.385499954223633);
-          expect(input_features.data.at(-1)).toBeCloseTo(-2.2504329681396484);
+          expect(avg(data)).toBeCloseTo(-0.0000010093053181966146);
+          expect(data[0]).toBeCloseTo(20.761859893798828);
+          expect(data[1]).toBeCloseTo(21.02924346923828);
+          expect(data[78]).toBeCloseTo(19.083993911743164);
+          expect(data[79]).toBeCloseTo(18.003454208374023);
+          expect(data[80]).toBeCloseTo(-2.595233917236328);
+          expect(data.at(-2)).toBeCloseTo(-2.385499954223633);
+          expect(data.at(-1)).toBeCloseTo(-2.2504329681396484);
         }
       },
       MAX_TEST_TIME,
