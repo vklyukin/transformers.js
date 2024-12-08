@@ -6,7 +6,7 @@ import { compare } from "../../test_utils.js";
 export default () => {
   const models_to_test = ["hf-internal-testing/tiny-random-CLIPModel"];
   it(
-    `CLIP (text)`,
+    `CLIPTextModelWithProjection`,
     async () => {
       const model_id = models_to_test[0];
 
@@ -32,7 +32,7 @@ export default () => {
   );
 
   it(
-    `CLIP (vision)`,
+    `CLIPVisionModelWithProjection`,
     async () => {
       const model_id = models_to_test[0];
 
