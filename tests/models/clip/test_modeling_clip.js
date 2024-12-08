@@ -1,7 +1,6 @@
 import { AutoTokenizer, AutoProcessor, load_image, CLIPVisionModelWithProjection, CLIPTextModelWithProjection } from "../../../src/transformers.js";
 
-import { MAX_TEST_EXECUTION_TIME } from "../../init.js";
-import { compare } from "../../test_utils.js";
+import { MAX_TEST_EXECUTION_TIME, DEFAULT_MODEL_OPTIONS } from "../../init.js";
 
 export default () => {
   const models_to_test = ["hf-internal-testing/tiny-random-CLIPModel"];
@@ -12,7 +11,7 @@ export default () => {
 
       // Load tokenizer and text model
       const tokenizer = await AutoTokenizer.from_pretrained(model_id);
-      const text_model = await CLIPTextModelWithProjection.from_pretrained(model_id, { dtype: "fp32" });
+      const text_model = await CLIPTextModelWithProjection.from_pretrained(model_id, DEFAULT_MODEL_OPTIONS);
 
       // Run tokenization
       const texts = ["a photo of a car", "a photo of a football match"];
@@ -24,7 +23,7 @@ export default () => {
       // Ensure correct shapes
       const expected_shape = [texts.length, text_model.config.projection_dim];
       const actual_shape = text_embeds.dims;
-      compare(expected_shape, actual_shape);
+      expect(expected_shape).toEqual(actual_shape);
 
       await text_model.dispose();
     },
@@ -38,7 +37,7 @@ export default () => {
 
       // Load processor and vision model
       const processor = await AutoProcessor.from_pretrained(model_id);
-      const vision_model = await CLIPVisionModelWithProjection.from_pretrained(model_id, { dtype: "fp32" });
+      const vision_model = await CLIPVisionModelWithProjection.from_pretrained(model_id, DEFAULT_MODEL_OPTIONS);
 
       // Read image and run processor
       const image = await load_image("https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/football-match.jpg");
@@ -50,7 +49,7 @@ export default () => {
       // Ensure correct shapes
       const expected_shape = [1, vision_model.config.projection_dim];
       const actual_shape = image_embeds.dims;
-      compare(expected_shape, actual_shape);
+      expect(expected_shape).toEqual(actual_shape);
 
       await vision_model.dispose();
     },

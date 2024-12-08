@@ -1,6 +1,6 @@
 import { AutoProcessor, AutoModelForAudioFrameClassification } from "../../../src/transformers.js";
 
-import { MAX_TEST_EXECUTION_TIME } from "../../init.js";
+import { MAX_TEST_EXECUTION_TIME, DEFAULT_MODEL_OPTIONS } from "../../init.js";
 import { compare } from "../../test_utils.js";
 
 export default () => {
@@ -19,7 +19,7 @@ export default () => {
       const model_id = models_to_test[0];
 
       // Load model and processor
-      const model = await AutoModelForAudioFrameClassification.from_pretrained(model_id, { dtype: "fp32" });
+      const model = await AutoModelForAudioFrameClassification.from_pretrained(model_id, DEFAULT_MODEL_OPTIONS);
       const processor = await AutoProcessor.from_pretrained(model_id);
 
       // Check processor config
