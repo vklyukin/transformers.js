@@ -46,7 +46,7 @@ describe("Generation parameters", () => {
     let model;
     let tokenizer;
     beforeAll(async () => {
-      model = await AutoModelForSeq2SeqLM.from_pretrained(model_id);
+      model = await AutoModelForSeq2SeqLM.from_pretrained(model_id, DEFAULT_MODEL_OPTIONS);
       tokenizer = await AutoTokenizer.from_pretrained(model_id);
     }, MAX_MODEL_LOAD_TIME);
 
@@ -115,7 +115,7 @@ describe("Generation parameters", () => {
     let model;
     let tokenizer;
     beforeAll(async () => {
-      model = await AutoModelForCausalLM.from_pretrained(model_id);
+      model = await AutoModelForCausalLM.from_pretrained(model_id, DEFAULT_MODEL_OPTIONS);
       tokenizer = await AutoTokenizer.from_pretrained(model_id);
     }, MAX_MODEL_LOAD_TIME);
 
@@ -188,7 +188,7 @@ describe("Streamers", () => {
     const model_id = "hf-internal-testing/tiny-random-LlamaForCausalLM";
     let model, tokenizer;
     beforeAll(async () => {
-      model = await AutoModelForCausalLM.from_pretrained(model_id);
+      model = await AutoModelForCausalLM.from_pretrained(model_id, DEFAULT_MODEL_OPTIONS);
       tokenizer = await AutoTokenizer.from_pretrained(model_id);
     }, MAX_MODEL_LOAD_TIME);
 
