@@ -1,6 +1,6 @@
 import { pipeline, cos_sim } from "../src/transformers.js";
 import { init, MAX_TEST_EXECUTION_TIME } from "./init.js";
-import { collect_and_execute_pipeline_tests, compare, loadAudio } from "./test_utils.js";
+import { collect_and_execute_pipeline_tests, compare, compareString, loadAudio } from "./test_utils.js";
 
 // Initialise the testing environment
 init();
@@ -724,7 +724,8 @@ xdescribe("Pipelines (ignored)", () => {
           // Transcribe English
           let output = await transcriber(audioData);
           expect(output.text.length).toBeGreaterThan(50);
-          // { text: " And so my fellow Americans ask not what your country can do for you, ask what you can do for your country." }
+          const expected = " And so my fellow Americans ask not what your country can do for you, ask what you can do for your country.";
+          compareString(expected, output.text);
         }
 
         {
@@ -757,14 +758,16 @@ xdescribe("Pipelines (ignored)", () => {
           // Transcribe French
           let output = await transcriber(audioData, { language: "french", task: "transcribe" });
           expect(output.text.length).toBeGreaterThan(20);
-          // { text: " J'adore, j'aime, je n'aime pas, je déteste." }
+          const expected = " J'adore, j'aime, je n'aime pas, je déteste.";
+          compareString(expected, output.text);
         }
 
         {
           // Translate French to English.
           let output = await transcriber(audioData, { language: "french", task: "translate" });
           expect(output.text.length).toBeGreaterThan(20);
-          // { text: " I love, I like, I don't like, I hate." }
+          const expected = " I love, I like, I don't like, I hate.";
+          compareString(expected, output.text);
         }
         await transcriber.dispose();
       },
@@ -783,14 +786,16 @@ xdescribe("Pipelines (ignored)", () => {
           // Transcribe French by autodetecting language
           let output = await transcriber(audioData, { language: null, task: "transcribe" });
           expect(output.text.length).toBeGreaterThan(20);
-          // { text: " J'adore, j'aime, je n'aime pas, je déteste." }
+          const expected = " J'adore, j'aime, je n'aime pas, je déteste.";
+          compareString(expected, output.text);
         }
 
         {
           // Translate French to English with language autodetect
           let output = await transcriber(audioData, { language: null, task: "translate" });
           expect(output.text.length).toBeGreaterThan(20);
-          // { text: " I love, I like, I don't like, I hate." }
+          const expected = " I love, I like, I don't like, I hate.";
+          compareString(expected, output.text);
         }
         await transcriber.dispose();
       },
