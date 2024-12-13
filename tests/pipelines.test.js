@@ -770,7 +770,33 @@ xdescribe("Pipelines (ignored)", () => {
       },
       MAX_TEST_EXECUTION_TIME,
     );
+    
+    it(
+      models[1],
+      async () => {
+        let transcriber = await pipeline("automatic-speech-recognition", models[1]);
 
+        let url = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/french-audio.wav";
+        let audioData = await loadAudio(url);
+
+        {
+          // Transcribe French by autodetecting language
+          let output = await transcriber(audioData, { language: null, task: "transcribe" });
+          expect(output.text.length).toBeGreaterThan(20);
+          // { text: " J'adore, j'aime, je n'aime pas, je déteste." }
+        }
+
+        {
+          // Translate French to English with language autodetect
+          let output = await transcriber(audioData, { language: null, task: "translate" });
+          expect(output.text.length).toBeGreaterThan(20);
+          // { text: " I love, I like, I don't like, I hate." }
+        }
+        await transcriber.dispose();
+      },
+      MAX_TEST_EXECUTION_TIME,
+    );
+    
     it(
       models[2].join(" + "),
       async () => {
