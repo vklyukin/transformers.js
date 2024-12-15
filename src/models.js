@@ -90,6 +90,7 @@ import {
     TopKLogitsWarper,
     TopPLogitsWarper,
     ClassifierFreeGuidanceLogitsProcessor,
+    OnlyGoodWordsLogitsProcessor,
 } from './generation/logits_process.js';
 
 import {
@@ -112,7 +113,7 @@ import {
 import { RawImage } from './utils/image.js';
 
 import { dynamic_time_warping, max, medianFilter } from './utils/maths.js';
-import { EosTokenCriteria, MaxLengthCriteria, StoppingCriteriaList } from './generation/stopping_criteria.js';
+import { AlwaysStopCriteria, EosTokenCriteria, MaxLengthCriteria, StoppingCriteriaList } from './generation/stopping_criteria.js';
 import { LogitsSampler } from './generation/logits_sampler.js';
 import { apis } from './env.js';
 
@@ -1210,6 +1211,10 @@ export class PreTrainedModel extends Callable {
 
         if (generation_config.bad_words_ids !== null) {
             processors.push(new NoBadWordsLogitsProcessor(generation_config.bad_words_ids, generation_config.eos_token_id));
+        }
+
+        if (generation_config.good_words_ids !== null) {
+            processors.push(new OnlyGoodWordsLogitsProcessor(generation_config.good_words_ids, generation_config.eos_token_id));
         }
 
         if (generation_config.min_length !== null && generation_config.eos_token_id !== null && generation_config.min_length > 0) {
@@ -3137,7 +3142,20 @@ export class WhisperForConditionalGeneration extends WhisperPreTrainedModel {
         if (!all_lang_ids || all_lang_ids.length <= 0) {
             throw new Error("Cannot detect language without language code to token ID map for model");
         }
-        const output = await this.generate({ ...options, decoder_input_ids });
+        const stopping_criteria = new StoppingCriteriaList();
+        stopping_criteria.push(new AlwaysStopCriteria());
+        const good_words_ids = [all_lang_ids];
+        const output = await this.generate({
+            ...options,
+            generation_config: {
+                ...generation_config,
+                good_words_ids,
+                num_beams: 1,
+                do_sample: false,
+            },
+            stopping_criteria,
+            decoder_input_ids,
+        });
         const sane = Array.from((/**@type {Tensor}**/(output)).data).flatMap(x => Number(x));
         const lang_ids = sane.filter(x => Object.values(generation_config.lang_to_id).includes(x));
         return lang_ids;
