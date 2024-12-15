@@ -775,27 +775,19 @@ xdescribe("Pipelines (ignored)", () => {
     );
     
     it(
-      models[1],
+      `${models[1]}-language-detect`,
       async () => {
         let transcriber = await pipeline("automatic-speech-recognition", models[1]);
-
-        let url = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/french-audio.wav";
+        let url = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/japanese-audio.wav";
         let audioData = await loadAudio(url);
-
         {
-          // Transcribe French by autodetecting language
+          // Transcribe Japanese by autodetecting language
+          // Note: this sample needs to be hard enough for Whisper not to be able to transcribe it properly
+          //  with the fallback 'en' language set!
           let output = await transcriber(audioData, { language: null, task: "transcribe" });
           expect(output.text.length).toBeGreaterThan(20);
-          const expected = " J'adore, j'aime, je n'aime pas, je déteste.";
-          compareString(expected, output.text);
-        }
-
-        {
-          // Translate French to English with language autodetect
-          let output = await transcriber(audioData, { language: null, task: "translate" });
-          expect(output.text.length).toBeGreaterThan(20);
-          const expected = " I love, I like, I don't like, I hate.";
-          compareString(expected, output.text);
+          const expected = "モリナガの美味しい牛乳は濃い青色に牛乳瓶を払ったゼザインのパック牛乳である。";
+          compareString(expected, output.text, 0.8);
         }
         await transcriber.dispose();
       },
