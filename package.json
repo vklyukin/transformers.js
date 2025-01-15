@@ -1,6 +1,6 @@
 {
   "name": "@huggingface/transformers",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "State-of-the-art Machine Learning for the web. Run 🤗 Transformers directly in your browser, with no need for a server!",
   "main": "./src/transformers.js",
   "types": "./types/transformers.d.ts",
@@ -26,7 +26,7 @@
     "format:check": "prettier --check .",
     "typegen": "tsc --build",
     "dev": "webpack serve --no-client-overlay",
-    "build": "webpack && npm run typegen",
+    "build": "webpack && npm run typegen && rm ./dist/ort.bundle.min.mjs && cp ./node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.mjs ./dist",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
     "readme": "python ./docs/scripts/build_readme.py",
     "docs-api": "node ./docs/scripts/generate.js",
@@ -57,7 +57,7 @@
   "dependencies": {
     "@huggingface/jinja": "^0.3.2",
     "onnxruntime-node": "1.20.1",
-    "onnxruntime-web": "1.21.0-dev.20250111-73f5b0c597",
+    "onnxruntime-web": "1.21.0-dev.20250114-228dd16893",
     "sharp": "^0.33.5"
   },
   "devDependencies": {
