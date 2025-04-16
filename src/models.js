@@ -158,7 +158,8 @@ const MODEL_CLASS_TO_NAME_MAPPING = new Map();
  * @private
  */
 async function getSession(pretrained_model_name_or_path, fileName, options) {
-    const custom_config = options.config?.['transformers.js_config'] ?? {};
+    let custom_config = options.config?.['transformers.js_config'] ?? {};
+
     let device = options.device ?? custom_config.device;
     if (device && typeof device !== 'string') {
         if (device.hasOwnProperty(fileName)) {
@@ -173,7 +174,17 @@ async function getSession(pretrained_model_name_or_path, fileName, options) {
     const selectedDevice = /** @type {import("./utils/devices.js").DeviceType} */(
         device ?? (apis.IS_NODE_ENV ? 'cpu' : 'wasm')
     );
+
     const executionProviders = deviceToExecutionProviders(selectedDevice);
+
+    // Update custom config with the selected device's config, if it exists
+    const device_config = custom_config.device_config ?? {};
+    if (device_config.hasOwnProperty(selectedDevice)) {
+        custom_config = {
+            ...custom_config,
+            ...device_config[selectedDevice],
+        };
+    }
 
     // If options.dtype is specified, we use it to choose the suffix for the model file.
     // Otherwise, we use the default dtype for the device.
@@ -195,7 +206,7 @@ async function getSession(pretrained_model_name_or_path, fileName, options) {
         }
 
         if (config_dtype && config_dtype !== DATA_TYPES.auto && DATA_TYPES.hasOwnProperty(config_dtype)) {
-            // Defined by the custom config, and is not "auto"
+            // Defined by the config, and is not "auto"
             dtype = config_dtype;
         } else {
             // Choose default dtype based on device, falling back to fp32
@@ -212,10 +223,11 @@ async function getSession(pretrained_model_name_or_path, fileName, options) {
     }
 
     // Only valid for models with a decoder
-    const kv_cache_dtype = custom_config.kv_cache_dtype
-        ? (typeof custom_config.kv_cache_dtype === 'string'
-            ? custom_config.kv_cache_dtype
-            : custom_config.kv_cache_dtype[selectedDtype] ?? 'float32')
+    const kv_cache_dtype_config = custom_config.kv_cache_dtype;
+    const kv_cache_dtype = kv_cache_dtype_config
+        ? (typeof kv_cache_dtype_config === 'string'
+            ? kv_cache_dtype_config
+            : kv_cache_dtype_config[selectedDtype] ?? 'float32')
         : undefined;
 
     if (kv_cache_dtype && !['float32', 'float16'].includes(kv_cache_dtype)) {
@@ -243,15 +255,15 @@ async function getSession(pretrained_model_name_or_path, fileName, options) {
         session_options.freeDimensionOverrides ??= free_dimension_overrides;
     } else if (selectedDevice.startsWith('webnn') && !session_options.freeDimensionOverrides) {
         console.warn(
-            'WebNN does not currently support dynamic shapes and requires `free_dimension_overrides` to be set in config.json as a field within "transformers.js_config". ' +
-            'When `free_dimension_overrides` is not set, you may experience significant performance degradation.'
+            `WebNN does not currently support dynamic shapes and requires 'free_dimension_overrides' to be set in config.json, preferably as a field within config["transformers.js_config"]["device_config"]["${selectedDevice}"]. ` +
+            `When 'free_dimension_overrides' is not set, you may experience significant performance degradation.`
         );
     }
 
     const return_path = apis.IS_NODE_ENV && env.useFSCache;
     const bufferOrPathPromise = getModelFile(pretrained_model_name_or_path, modelFileName, true, options, return_path);
 
-    // handle onnx external data files
+    // Handle onnx external data files
     const use_external_data_format = options.use_external_data_format ?? custom_config.use_external_data_format;
     /** @type {Promise<string|{path: string, data: Uint8Array}>[]} */
     let externalDataPromises = [];
