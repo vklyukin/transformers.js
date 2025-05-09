@@ -1,82 +1,6 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "fs":
-/*!*********************!*\
-  !*** external "fs" ***!
-  \*********************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("fs");
-
-/***/ }),
-
-/***/ "onnxruntime-common":
-/*!*************************************!*\
-  !*** external "onnxruntime-common" ***!
-  \*************************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("onnxruntime-common");
-
-/***/ }),
-
-/***/ "onnxruntime-node":
-/*!***********************************!*\
-  !*** external "onnxruntime-node" ***!
-  \***********************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("onnxruntime-node");
-
-/***/ }),
-
-/***/ "path":
-/*!***********************!*\
-  !*** external "path" ***!
-  \***********************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("path");
-
-/***/ }),
-
-/***/ "sharp":
-/*!************************!*\
-  !*** external "sharp" ***!
-  \************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("sharp");
-
-/***/ }),
-
-/***/ "url":
-/*!**********************!*\
-  !*** external "url" ***!
-  \**********************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("url");
-
-/***/ }),
-
-/***/ "?8b6b":
-/*!*********************************!*\
-  !*** onnxruntime-web (ignored) ***!
-  \*********************************/
-/***/ (() => {
-
-/* (ignored) */
-
-/***/ }),
-
 /***/ "./node_modules/@huggingface/jinja/dist/index.js":
 /*!*******************************************************!*\
   !*** ./node_modules/@huggingface/jinja/dist/index.js ***!
@@ -34951,6 +34875,82 @@ async function load_video(src, { num_frames = null, fps = null } = {}) {
     return new RawVideo(frames, duration);
 }
 
+
+/***/ }),
+
+/***/ "?8b6b":
+/*!*********************************!*\
+  !*** onnxruntime-web (ignored) ***!
+  \*********************************/
+/***/ (() => {
+
+/* (ignored) */
+
+/***/ }),
+
+/***/ "fs":
+/*!*********************!*\
+  !*** external "fs" ***!
+  \*********************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs");
+
+/***/ }),
+
+/***/ "onnxruntime-common":
+/*!*************************************!*\
+  !*** external "onnxruntime-common" ***!
+  \*************************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("onnxruntime-common");
+
+/***/ }),
+
+/***/ "onnxruntime-node":
+/*!***********************************!*\
+  !*** external "onnxruntime-node" ***!
+  \***********************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("onnxruntime-node");
+
+/***/ }),
+
+/***/ "path":
+/*!***********************!*\
+  !*** external "path" ***!
+  \***********************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("path");
+
+/***/ }),
+
+/***/ "sharp":
+/*!************************!*\
+  !*** external "sharp" ***!
+  \************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("sharp");
+
+/***/ }),
+
+/***/ "url":
+/*!**********************!*\
+  !*** external "url" ***!
+  \**********************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("url");
 
 /***/ })
 
