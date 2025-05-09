@@ -7852,6 +7852,11 @@ const MODEL_FOR_CAUSAL_LM_MAPPING_NAMES = new Map([
     ['phi3_v', ['Phi3VForCausalLM', Phi3VForCausalLM]],
 ]);
 
+
+const MODEL_FOR_MULTIMODALITY_MAPPING_NAMES = new Map([
+    ['multi_modality', ['MultiModalityCausalLM', MultiModalityCausalLM]],
+]);
+
 const MODEL_FOR_MASKED_LM_MAPPING_NAMES = new Map([
     ['bert', ['BertForMaskedLM', BertForMaskedLM]],
     ['modernbert', ['ModernBertForMaskedLM', ModernBertForMaskedLM]],
