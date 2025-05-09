@@ -10124,7 +10124,7 @@ class WhisperForConditionalGeneration extends WhisperPreTrainedModel {
      * @returns {Promise<number[]>} A list of language token IDs detected.
      */
     async _detect_language(options) {
-        const inputs = options.inputs ?? options.input_features; // Use input_features if inputs is null/undefined
+        const inputs = options.inputs ?? (/** @type {any} */ (options)).input_features; // Use input_features if inputs is null/undefined, cast options to any for this access
         const generation_config = options.generation_config;
         const batch_size = inputs?.dims?.[0]
         if (!inputs || batch_size <= 0 || inputs.size <= 0) {
