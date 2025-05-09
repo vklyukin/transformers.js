@@ -1,6 +1,6 @@
 
 /**
- * @file Definitions of all models available in Transformers.js.
+ * @file Definitions of all models available in Transformers.js. 
  * 
  * **Example:** Load and run an `AutoModel`.
  * 
@@ -3349,7 +3349,7 @@ export class WhisperForConditionalGeneration extends WhisperPreTrainedModel {
      * @returns {Promise<number[]>} A list of language token IDs detected.
      */
     async _detect_language(options) {
-        const inputs = options.inputs
+        const inputs = options.inputs ?? options.input_features; // Use input_features if inputs is null/undefined
         const generation_config = options.generation_config;
         const batch_size = inputs?.dims?.[0]
         if (!inputs || batch_size <= 0 || inputs.size <= 0) {
