@@ -3380,7 +3380,15 @@ export class WhisperForConditionalGeneration extends WhisperPreTrainedModel {
             stopping_criteria,
             decoder_input_ids,
         });
-        const sane = Array.from((/**@type {Tensor}**/(output)).data).flatMap(x => Number(x));
+
+        const outputTensor = /** @type {Tensor} */ (output);
+
+        if (!outputTensor || typeof outputTensor.data === 'undefined') {
+            console.error("Output from generate in _detect_language is not a valid Tensor or its data is undefined.", output);
+            throw new Error('Language detection failed: No valid output tensor data from generate.');
+        }
+
+        const sane = Array.from(outputTensor.data).flatMap(x => Number(x));
         const lang_ids = sane.filter(x => Object.values(generation_config.lang_to_id).includes(x));
         return lang_ids;
     }
@@ -7843,11 +7851,6 @@ const MODEL_FOR_CAUSAL_LM_MAPPING_NAMES = new Map([
     // Also image-text-to-text
     ['phi3_v', ['Phi3VForCausalLM', Phi3VForCausalLM]],
 ]);
-
-const MODEL_FOR_MULTIMODALITY_MAPPING_NAMES = new Map([
-    ['multi_modality', ['MultiModalityCausalLM', MultiModalityCausalLM]],
-]);
-
 
 const MODEL_FOR_MASKED_LM_MAPPING_NAMES = new Map([
     ['bert', ['BertForMaskedLM', BertForMaskedLM]],
