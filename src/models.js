@@ -3357,6 +3357,11 @@ export class WhisperForConditionalGeneration extends WhisperPreTrainedModel {
         }
         const start_of_transcript = generation_config.decoder_start_token_id;
         const decoder_input_ids = full([batch_size, 1], Number(1.0)).mul_(start_of_transcript).tolist();
+
+        if (typeof generation_config.lang_to_id !== 'object' || generation_config.lang_to_id === null) {
+            throw new Error("Language token map (`lang_to_id`) is missing or invalid in generation_config. Cannot detect language.");
+        }
+
         const all_lang_ids = Object.values(generation_config.lang_to_id);
         if (!all_lang_ids || all_lang_ids.length <= 0) {
             throw new Error("Cannot detect language without language code to token ID map for model");
@@ -5635,7 +5640,7 @@ export class DonutSwinPreTrainedModel extends PreTrainedModel { }
  * 
  * // Decode output
  * const decoded = tokenizer.batch_decode(output)[0];
- * // <s_cord-v2><s_menu><s_nm> CINNAMON SUGAR</s_nm><s_unitprice> 17,000</s_unitprice><s_cnt> 1 x</s_cnt><s_price> 17,000</s_price></s_menu><s_sub_total><s_subtotal_price> 17,000</s_subtotal_price></s_sub_total><s_total><s_total_price> 17,000</s_total_price><s_cashprice> 20,000</s_cashprice><s_changeprice> 3,000</s_changeprice></s_total></s>
+ * // <s_cord-v2><s_menu><s_nm> CINNAMON SUGAR</s_nm><s_unitprice> 17,000</s_unitprice><s_cnt> 1 x</s_cnt><s_price> 17,000</s_price></s_menu><s_sub_total><s_subtotal_price> 17,000</s_subtotal_price></s_sub_total><s_total><s_total_price> 17,000</s_total_price><s_cashprice> 20,000</s_cashprice><s_changeprice> 3,000</s_changeprice></s_total>
  * ```
  * 
  * **Example:** Step-by-step Document Visual Question Answering (DocVQA)
@@ -5671,7 +5676,7 @@ export class DonutSwinPreTrainedModel extends PreTrainedModel { }
  * 
  * // Decode output
  * const decoded = tokenizer.batch_decode(output)[0];
- * // <s_docvqa><s_question> What is the invoice number?</s_question><s_answer> us-001</s_answer></s>
+ * // <s_docvqa><s_question> What is the invoice number?</s_question><s_answer> us-001</s_answer>
  * ```
  */
 export class DonutSwinModel extends DonutSwinPreTrainedModel { }
@@ -6623,7 +6628,7 @@ export class SpeechT5ForTextToSpeech extends SpeechT5PreTrainedModel {
 /**
  * HiFi-GAN vocoder.
  * 
- * See [SpeechT5ForSpeechToText](./models#module_models.SpeechT5ForSpeechToText) for example usage.
+ * See [SpeechT5ForSpeechToText](./models#module_models.SpeechT5ForSpeechToSpeech) for example usage.
  */
 export class SpeechT5HifiGan extends PreTrainedModel {
     main_input_name = 'spectrogram';
